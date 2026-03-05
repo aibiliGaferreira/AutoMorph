@@ -89,30 +89,37 @@ class BasicDataset(Dataset):
 
 class BasicDataset_OUT(Dataset):
     'Characterizes a dataset for PyTorch'
-    def __init__(self, image_dir, image_size, n_classes, train_or):
+    def __init__(self, imgs, image_size, n_classes):
         'Initialization'
         self.image_size = image_size
-        self.image_dir = image_dir
         self.n_classes = n_classes
-        self.train_or = train_or
         
-        self.ids = [splitext(file)[0] for file in sorted(listdir(image_dir))
-                    if not file.startswith('.')]
-        logging.info(f'Creating dataset with {len(self.ids)} examples')
+        if isinstance(imgs, str): # Directory path
+            files = [file for file in sorted(listdir(imgs)) if not file.startswith('.')]
+            self.ids = files
+            self.imgs = [np.array(Image.open(imgs + file)) for file in files]
+        elif isinstance(imgs, list) and all(isinstance(i, str) for i in imgs): # List of file paths
+            self.ids = imgs
+            self.imgs = [np.array(Image.open(file)) for file in imgs]
+        else: # List of images
+            self.ids = list(map(str, range(len(imgs))))
+            self.imgs = imgs
+        
+        logging.info(f'Creating dataset with {len(self.imgs)} examples')
 
         
     def __len__(self):
         'Denotes the total number of samples'
-        return len(self.ids)
+        return len(self.imgs)
 
     @classmethod
-    def preprocess(self, pil_img, img_size, train_or,index):
-        #w, h = pil_img.size
+    def preprocess(self, image, img_size):
         newW, newH = img_size[0], img_size[1]
         assert newW > 0 and newH > 0, 'Scale is too small'
+        pil_img = Image.fromarray(image)
         pil_img = pil_img.resize((newW, newH))
         img_array = np.array(pil_img)
-        
+
         mean_value=np.mean(img_array[img_array > 0])
         std_value=np.std(img_array[img_array > 0])
         img_array=(img_array-mean_value)/std_value
@@ -127,14 +134,10 @@ class BasicDataset_OUT(Dataset):
         
     def __getitem__(self, index):
         
-        idx = self.ids[index]
-        img_file = glob(self.image_dir + idx + '.*')
-        image = Image.open(img_file[0])
-        image_processed = self.preprocess(image, self.image_size, self.train_or, index)
+        image = self.imgs[index]
+        image_processed = self.preprocess(image, self.image_size)
  
         return {
-            'img_file': img_file,
+            'index': self.ids[index],
             'image': torch.from_numpy(image_processed).type(torch.FloatTensor)
         }
-
-

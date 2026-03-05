@@ -9,133 +9,84 @@ import numpy as np
 import pandas as pd
 import torch.nn as nn
 from tqdm import tqdm
-from dataset import BasicDataset_OUT
+from .dataset import BasicDataset_OUT
 from torch.utils.data import DataLoader
-from model import Resnet101_fl, InceptionV3_fl, Densenet161_fl, Resnext101_32x8d_fl, MobilenetV2_fl, Vgg16_bn_fl, Efficientnet_fl
+from .model import Resnet101_fl, InceptionV3_fl, Densenet161_fl, Resnext101_32x8d_fl, MobilenetV2_fl, Vgg16_bn_fl, Efficientnet_fl
 
 AUTOMORPH_DATA = os.getenv('AUTOMORPH_DATA','..')
 
-def test_net(model_fl_1,
-            model_fl_2,
-            model_fl_3,
-            model_fl_4,
-            model_fl_5,
-            model_fl_6,
-            model_fl_7,
-            model_fl_8,
-              test_dir,
-              device,
-              epochs=5,
-              batch_size=20,
-              image_size=(512,512),
-              ):
+def test_net(models,
+            imgs,
+            device,
+            batch_size=20,
+            image_size=(512,512),
+            num_workers=0,
+            save = False,
+            task='Retinal_quality',
+            load='EyePACS_quality',
+            model='efficientnet',
+            dataset='test_outside',
+            n_classes=3
+            ):
 
-    storage_path ="Ensemble_exp_{}/{}/train_on_{}/test_on_{}/".format(args.task, args.load, args.model, args.dataset)
-    n_classes = args.n_class
+    storage_path ="Ensemble_exp_{}/{}/train_on_{}/test_on_{}/".format(task, load, model, dataset)
+    n_classes = n_classes
     # create files
 
     if not os.path.isdir(storage_path):
         os.makedirs(storage_path)
     
-    dataset = BasicDataset_OUT(test_dir, image_size, n_classes, train_or=False)
+    dataset = BasicDataset_OUT(imgs, image_size, n_classes)
         
     n_test = len(dataset)
-    val_loader = DataLoader(dataset, batch_size, shuffle=False, num_workers=8, pin_memory=False, drop_last=False)
+    val_loader = DataLoader(dataset, batch_size, shuffle=False, num_workers=num_workers, pin_memory=False, drop_last=False)
     
     prediction_decode_list = []
     filename_list = []
     prediction_list_mean = []
     prediction_list_std = []
     mask_pred_tensor_small_all = 0
-    for epoch in range(epochs):
 
-        model_fl_1.eval()
-        model_fl_2.eval()
-        model_fl_3.eval()
-        model_fl_4.eval()
-        model_fl_5.eval()
-        model_fl_6.eval()
-        model_fl_7.eval()
-        model_fl_8.eval()
+    for model in models:
+        model.eval()
+    with tqdm(total=n_test, unit='img') as pbar:
+        for batch in val_loader:
+            imgs = batch['image']
+            index = batch['index']
+            mask_pred_tensor_small_all = 0
+            imgs = imgs.to(device=device, dtype=torch.float32)
+            ##################sigmoid or softmax
 
-
-        with tqdm(total=n_test, desc=f'Epoch {epoch + 1}/{epochs}', unit='img') as pbar:
-            for batch in val_loader:
-                imgs = batch['image']
-                filename = batch['img_file'][0]
-                mask_pred_tensor_small_all = 0
-                imgs = imgs.to(device=device, dtype=torch.float32)
-                ##################sigmoid or softmax
-
-                prediction_list = []
-                with torch.no_grad():
-                    #print(real_patch.size())
-                    prediction = model_fl_1(imgs)
+            prediction_list = []
+            with torch.no_grad():                
+                for model in models:
+                    prediction = model(imgs)
                     prediction_softmax = nn.Softmax(dim=1)(prediction)
                     mask_pred_tensor_small = prediction_softmax.clone().detach()
                     mask_pred_tensor_small_all+=mask_pred_tensor_small.type(torch.FloatTensor)
                     prediction_list.append(mask_pred_tensor_small.type(torch.FloatTensor).cpu().detach().numpy())
 
-                    prediction = model_fl_2(imgs)
-                    prediction_softmax = nn.Softmax(dim=1)(prediction)
-                    mask_pred_tensor_small = prediction_softmax.clone().detach()
-                    mask_pred_tensor_small_all+=mask_pred_tensor_small.type(torch.FloatTensor)
-                    prediction_list.append(mask_pred_tensor_small.type(torch.FloatTensor).cpu().detach().numpy())
+                mask_pred_tensor_small_all = mask_pred_tensor_small_all/len(models)
 
-                    prediction = model_fl_3(imgs)
-                    prediction_softmax = nn.Softmax(dim=1)(prediction)
-                    mask_pred_tensor_small = prediction_softmax.clone().detach()
-                    mask_pred_tensor_small_all+=mask_pred_tensor_small.type(torch.FloatTensor)
-                    prediction_list.append(mask_pred_tensor_small.type(torch.FloatTensor).cpu().detach().numpy())
-
-                    prediction = model_fl_4(imgs)
-                    prediction_softmax = nn.Softmax(dim=1)(prediction)
-                    mask_pred_tensor_small = prediction_softmax.clone().detach()
-                    mask_pred_tensor_small_all+=mask_pred_tensor_small.type(torch.FloatTensor)
-                    prediction_list.append(mask_pred_tensor_small.type(torch.FloatTensor).cpu().detach().numpy())
-
-                    prediction = model_fl_5(imgs)
-                    prediction_softmax = nn.Softmax(dim=1)(prediction)
-                    mask_pred_tensor_small = prediction_softmax.clone().detach()
-                    mask_pred_tensor_small_all+=mask_pred_tensor_small.type(torch.FloatTensor)
-                    prediction_list.append(mask_pred_tensor_small.type(torch.FloatTensor).cpu().detach().numpy())
-
-                    prediction = model_fl_6(imgs)
-                    prediction_softmax = nn.Softmax(dim=1)(prediction)
-                    mask_pred_tensor_small = prediction_softmax.clone().detach()
-                    mask_pred_tensor_small_all+=mask_pred_tensor_small.type(torch.FloatTensor)
-                    prediction_list.append(mask_pred_tensor_small.type(torch.FloatTensor).cpu().detach().numpy())
-
-                    prediction = model_fl_7(imgs)
-                    prediction_softmax = nn.Softmax(dim=1)(prediction)
-                    mask_pred_tensor_small = prediction_softmax.clone().detach()
-                    mask_pred_tensor_small_all+=mask_pred_tensor_small.type(torch.FloatTensor)
-                    prediction_list.append(mask_pred_tensor_small.type(torch.FloatTensor).cpu().detach().numpy())
-
-                    prediction = model_fl_8(imgs)
-                    prediction_softmax = nn.Softmax(dim=1)(prediction)
-                    mask_pred_tensor_small = prediction_softmax.clone().detach()
-                    mask_pred_tensor_small_all+=mask_pred_tensor_small.type(torch.FloatTensor)
-                    prediction_list.append(mask_pred_tensor_small.type(torch.FloatTensor).cpu().detach().numpy())
-
-                    mask_pred_tensor_small_all = mask_pred_tensor_small_all/8
-
-                    _,prediction_decode = torch.max(mask_pred_tensor_small_all, 1)
+                _,prediction_decode = torch.max(mask_pred_tensor_small_all, 1)
                     
-                    prediction_list = np.array(prediction_list)
-                    prediction_list_mean.extend(np.mean(prediction_list, axis=0))
-                    prediction_list_std.extend(np.std(prediction_list, axis=0))
+                prediction_list = np.array(prediction_list)
+                prediction_list_mean.extend(np.mean(prediction_list, axis=0))
+                prediction_list_std.extend(np.std(prediction_list, axis=0))
 
-                    prediction_decode_list.extend(prediction_decode.cpu().detach().numpy())
-                    filename_list.extend(filename)
-                    pbar.update(imgs.shape[0])
-        
+                prediction_decode_list.extend(prediction_decode.cpu().detach().numpy())
+                filename_list.extend(index)
+                pbar.update(imgs.shape[0])
+
     Data4stage2 = pd.DataFrame({'Name':filename_list, 'softmax_good':np.array(prediction_list_mean)[:,0],'softmax_usable':np.array(prediction_list_mean)[:,1],'softmax_bad':np.array(prediction_list_mean)[:,2], 'good_sd':np.array(prediction_list_std)[:,0],'usable_sd':np.array(prediction_list_std)[:,1],'bad_sd':np.array(prediction_list_std)[:,2], 'Prediction': prediction_decode_list})
 
-    if not os.path.exists(f'{AUTOMORPH_DATA}/Results/M1'):
-        os.makedirs(f'{AUTOMORPH_DATA}/Results/M1')
-    Data4stage2.to_csv(f'{AUTOMORPH_DATA}/Results/M1/results_ensemble.csv', index = None, encoding='utf8')
-
+    if save:
+        if not os.path.exists(f'{AUTOMORPH_DATA}/Results/M1'):
+            os.makedirs(f'{AUTOMORPH_DATA}/Results/M1')
+        Data4stage2.to_csv(f'{AUTOMORPH_DATA}/Results/M1/results_ensemble.csv', index = None, encoding='utf8')
+        return None
+    else:
+        return Data4stage2
 
 
 
