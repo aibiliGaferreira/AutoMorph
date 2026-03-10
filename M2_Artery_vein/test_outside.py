@@ -9,24 +9,29 @@ import torchvision
 import torch
 import numpy as np
 from tqdm import tqdm
-from scripts.model import Generator_main, Generator_branch
-from scripts.dataset import LearningAVSegData_OOD
+from .scripts.model import Generator_main, Generator_branch
+from .scripts.dataset import LearningAVSegData_OOD
 from torch.utils.data import DataLoader
 from torchvision.utils import save_image
 from PIL import Image
 import pandas as pd
 from skimage import io
-from scripts.utils import Define_image_size
-from FD_cal import fractal_dimension,vessel_density
+from .scripts.utils import Define_image_size
+from .FD_cal import fractal_dimension,vessel_density
 from skimage.morphology import skeletonize,remove_small_objects
 
 AUTOMORPH_DATA = os.getenv('AUTOMORPH_DATA','..')
 
-def filter_frag(data_path):
-    if os.path.isdir(data_path + 'raw/.ipynb_checkpoints'):
-        shutil.rmtree(data_path + 'raw/.ipynb_checkpoints')
+def filter_frag(images):
+    if isinstance(images, str):
+        data_path = images
+        if os.path.isdir(data_path + 'raw/.ipynb_checkpoints'):
+            shutil.rmtree(data_path + 'raw/.ipynb_checkpoints')
 
-    image_list=os.listdir(data_path + 'raw')
+        image_list=os.listdir(data_path + 'raw')
+    else:
+        image_list = images
+
     FD_cal_r=[]
     name_list=[]
     VD_cal_r=[]
@@ -34,9 +39,16 @@ def filter_frag(data_path):
     VD_cal_b=[]
     width_cal_r=[]
     width_cal_b=[]
+    img_r_list = []
+    img_b_list = []
+    img_skeleton_r_list = []
+    img_skeleton_b_list = []
     
-    for i in sorted(image_list):
-        img=io.imread(data_path + 'resized/' + i).astype(np.int64)
+    for i in image_list:
+        if isinstance(images, str):
+            img=io.imread(data_path + 'resized/' + i).astype(np.int64)
+        else:
+            img = i.squeeze()
         img = cv2.resize(img,(912,912),interpolation = cv2.INTER_NEAREST)
         img2=img>0
         img_r = img2[...,0] + img2[...,1]
@@ -44,23 +56,30 @@ def filter_frag(data_path):
         img_r = remove_small_objects(img_r, 30, connectivity=5)
         img_b = remove_small_objects(img_b, 30, connectivity=5)
         
-        if not os.path.isdir(data_path + 'artery_binary_process/'):
-            os.makedirs(data_path + 'artery_binary_process/') 
-        io.imsave(data_path + 'artery_binary_process/' + i , 255*(img_r.astype('uint8')),check_contrast=False)
-        if not os.path.isdir(data_path + 'vein_binary_process/'):
-            os.makedirs(data_path + 'vein_binary_process/') 
-        io.imsave(data_path + 'vein_binary_process/' + i , 255*(img_b.astype('uint8')),check_contrast=False)
-        
+        if isinstance(images, str):
+            if not os.path.isdir(data_path + 'artery_binary_process/'):
+                os.makedirs(data_path + 'artery_binary_process/') 
+            io.imsave(data_path + 'artery_binary_process/' + i , 255*(img_r.astype('uint8')),check_contrast=False)
+            if not os.path.isdir(data_path + 'vein_binary_process/'):
+                os.makedirs(data_path + 'vein_binary_process/') 
+            io.imsave(data_path + 'vein_binary_process/' + i , 255*(img_b.astype('uint8')),check_contrast=False)
+        else:
+            img_r_list.append(255*img_r.astype('uint8'))
+            img_b_list.append(255*img_b.astype('uint8'))
+
         skeleton_r = skeletonize(img_r)
         skeleton_b = skeletonize(img_b)
         
-        if not os.path.isdir(data_path + 'artery_binary_skeleton/'):
-            os.makedirs(data_path + 'artery_binary_skeleton/') 
-        io.imsave(data_path + 'artery_binary_skeleton/' + i, 255*(skeleton_r.astype('uint8')),check_contrast=False)
-        if not os.path.isdir(data_path + 'vein_binary_skeleton/'):
-            os.makedirs(data_path + 'vein_binary_skeleton/') 
-        io.imsave(data_path + 'vein_binary_skeleton/' + i, 255*(skeleton_b.astype('uint8')),check_contrast=False)
-        
+        if isinstance(images, str):
+            if not os.path.isdir(data_path + 'artery_binary_skeleton/'):
+                os.makedirs(data_path + 'artery_binary_skeleton/') 
+            io.imsave(data_path + 'artery_binary_skeleton/' + i, 255*(skeleton_r.astype('uint8')),check_contrast=False)
+            if not os.path.isdir(data_path + 'vein_binary_skeleton/'):
+                os.makedirs(data_path + 'vein_binary_skeleton/') 
+            io.imsave(data_path + 'vein_binary_skeleton/' + i, 255*(skeleton_b.astype('uint8')),check_contrast=False)
+        else:
+            img_skeleton_r_list.append(255*skeleton_r.astype('uint8'))
+            img_skeleton_b_list.append(255*skeleton_b.astype('uint8'))
         
         FD_boxcounting_r = fractal_dimension(img_r)
         FD_boxcounting_b = fractal_dimension(img_b)
@@ -77,36 +96,45 @@ def filter_frag(data_path):
         width_cal_r.append(width_r)
         width_cal_b.append(width_b)
     
-    return FD_cal_r,name_list,VD_cal_r,FD_cal_b,VD_cal_b,width_cal_r,width_cal_b
+        return {
+            "FD_cal_r": FD_cal_r,
+            "images": name_list,
+            "VD_cal_r": VD_cal_r,
+            "FD_cal_b": FD_cal_b,
+            "VD_cal_b": VD_cal_b,
+            "width_cal_r": width_cal_r,
+            "width_cal_b": width_cal_b,
+            "img_r": img_r_list,
+            "img_b": img_b_list,
+            "skeleton_r": img_skeleton_r_list,
+            "skeleton_b": img_skeleton_b_list
+        }
 
 
 
-def test_net(net_G_1, net_G_A_1, net_G_V_1, net_G_2, net_G_A_2, net_G_V_2, net_G_3, net_G_A_3, net_G_V_3, net_G_4, net_G_A_4, net_G_V_4, net_G_5, net_G_A_5, net_G_V_5, net_G_6, net_G_A_6, net_G_V_6, net_G_7, net_G_A_7, net_G_V_7, net_G_8, net_G_A_8, net_G_V_8, loader, device, mode, dataset):
-
+def test_net(models, loader, device, save=False):
     
-    n_val = len(loader) 
-
-    num = 0
+    n_val = len(loader)
     
     seg_results_small_path = f'{AUTOMORPH_DATA}/Results/M2/artery_vein/resized/'
     seg_results_raw_path = f'{AUTOMORPH_DATA}/Results/M2/artery_vein/raw/'
     
-    if not os.path.isdir(seg_results_small_path):
+    if save and not os.path.isdir(seg_results_small_path):
         os.makedirs(seg_results_small_path)
-
-    if not os.path.isdir(seg_results_raw_path):
+    if save and not os.path.isdir(seg_results_raw_path):
         os.makedirs(seg_results_raw_path)
-
     seg_uncertainty_small_path = f'{AUTOMORPH_DATA}/Results/M2/artery_vein/resize_uncertainty/'        
-    if not os.path.isdir(seg_uncertainty_small_path):
+    if save and not os.path.isdir(seg_uncertainty_small_path):
         os.makedirs(seg_uncertainty_small_path)
-    
     seg_uncertainty_raw_path = f'{AUTOMORPH_DATA}/Results/M2/artery_vein/raw_uncertainty/'
-    
-    if not os.path.isdir(seg_uncertainty_raw_path):
+    if save and not os.path.isdir(seg_uncertainty_raw_path):
         os.makedirs(seg_uncertainty_raw_path)
         
-        
+    av_resized = []
+    av_raw = []
+    uncertainty_resized = []
+    uncertainty_raw = []
+
     with tqdm(total=n_val, desc='Validation round', unit='batch', leave=False) as pbar:
         for batch in loader:
             imgs = batch['image']
@@ -116,148 +144,78 @@ def test_net(net_G_1, net_G_A_1, net_G_V_1, net_G_2, net_G_A_2, net_G_V_2, net_G
             mask_pred_tensor_small_all = 0
             imgs = imgs.to(device=device, dtype=torch.float32)
 
-            with torch.no_grad():
+            mask_pred_list = []
+            for model in models:
+                with torch.no_grad():
+                    net_G, net_G_A, net_G_V = model
 
-                num +=1
-                masks_pred_G_A, masks_pred_G_fusion_A = net_G_A_1(imgs)
-                masks_pred_G_V, masks_pred_G_fusion_V = net_G_V_1(imgs)
-                masks_pred_G_sigmoid_A_part = masks_pred_G_fusion_A.detach()
-                masks_pred_G_sigmoid_V_part = masks_pred_G_fusion_V.detach()
+                    masks_pred_G_A, masks_pred_G_fusion_A = net_G_A(imgs)
+                    masks_pred_G_V, masks_pred_G_fusion_V = net_G_V(imgs)
+                    masks_pred_G_sigmoid_A_part = masks_pred_G_fusion_A.detach()
+                    masks_pred_G_sigmoid_V_part = masks_pred_G_fusion_V.detach()
 
-                mask_pred,_,_,_ = net_G_1(imgs, masks_pred_G_sigmoid_A_part, masks_pred_G_sigmoid_V_part)
-                mask_pred_tensor_small = mask_pred.clone().detach()
-                mask_pred_tensor_small_1 = F.softmax(mask_pred_tensor_small,dim=1)
-                mask_pred_tensor_small_all+=mask_pred_tensor_small_1.type(torch.FloatTensor)
+                    mask_pred,_,_,_ = net_G(imgs, masks_pred_G_sigmoid_A_part, masks_pred_G_sigmoid_V_part)
+                    mask_pred_tensor_small = mask_pred.clone().detach()
+                    mask_pred_tensor_small_1 = F.softmax(mask_pred_tensor_small,dim=1)
+                    mask_pred_tensor_small_all+=mask_pred_tensor_small_1.type(torch.FloatTensor)
+                    mask_pred_list.append(mask_pred_tensor_small_1)
                 
+            mask_pred_tensor_small_all = (mask_pred_tensor_small_all/len(models)).to(device=device)
                 
-                masks_pred_G_A, masks_pred_G_fusion_A = net_G_A_2(imgs)
-                masks_pred_G_V, masks_pred_G_fusion_V = net_G_V_2(imgs)
-                masks_pred_G_sigmoid_A_part = masks_pred_G_fusion_A.detach()
-                masks_pred_G_sigmoid_V_part = masks_pred_G_fusion_V.detach()
-
-                mask_pred,_,_,_ = net_G_2(imgs, masks_pred_G_sigmoid_A_part, masks_pred_G_sigmoid_V_part)
-                mask_pred_tensor_small = mask_pred.clone().detach()
-                mask_pred_tensor_small_2 = F.softmax(mask_pred_tensor_small,dim=1)
-                mask_pred_tensor_small_all+=mask_pred_tensor_small_2.type(torch.FloatTensor)
-                
-                
-                masks_pred_G_A, masks_pred_G_fusion_A = net_G_A_3(imgs)
-                masks_pred_G_V, masks_pred_G_fusion_V = net_G_V_3(imgs)
-                masks_pred_G_sigmoid_A_part = masks_pred_G_fusion_A.detach()
-                masks_pred_G_sigmoid_V_part = masks_pred_G_fusion_V.detach()
-
-                mask_pred,_,_,_ = net_G_3(imgs, masks_pred_G_sigmoid_A_part, masks_pred_G_sigmoid_V_part)
-                mask_pred_tensor_small = mask_pred.clone().detach()
-                mask_pred_tensor_small_3 = F.softmax(mask_pred_tensor_small,dim=1)
-                mask_pred_tensor_small_all+=mask_pred_tensor_small_3.type(torch.FloatTensor)                
-                
-                
-                masks_pred_G_A, masks_pred_G_fusion_A = net_G_A_4(imgs)
-                masks_pred_G_V, masks_pred_G_fusion_V = net_G_V_4(imgs)
-                masks_pred_G_sigmoid_A_part = masks_pred_G_fusion_A.detach()
-                masks_pred_G_sigmoid_V_part = masks_pred_G_fusion_V.detach()
-
-                mask_pred,_,_,_ = net_G_4(imgs, masks_pred_G_sigmoid_A_part, masks_pred_G_sigmoid_V_part)
-                mask_pred_tensor_small = mask_pred.clone().detach()
-                mask_pred_tensor_small_4 = F.softmax(mask_pred_tensor_small,dim=1)
-                mask_pred_tensor_small_all+=mask_pred_tensor_small_4.type(torch.FloatTensor)    
-                
-                
-                masks_pred_G_A, masks_pred_G_fusion_A = net_G_A_5(imgs)
-                masks_pred_G_V, masks_pred_G_fusion_V = net_G_V_5(imgs)
-                masks_pred_G_sigmoid_A_part = masks_pred_G_fusion_A.detach()
-                masks_pred_G_sigmoid_V_part = masks_pred_G_fusion_V.detach()
-
-                mask_pred,_,_,_ = net_G_5(imgs, masks_pred_G_sigmoid_A_part, masks_pred_G_sigmoid_V_part)
-                mask_pred_tensor_small = mask_pred.clone().detach()
-                mask_pred_tensor_small_5 = F.softmax(mask_pred_tensor_small,dim=1)
-                mask_pred_tensor_small_all+=mask_pred_tensor_small_5.type(torch.FloatTensor)    
-                
-                
-                masks_pred_G_A, masks_pred_G_fusion_A = net_G_A_6(imgs)
-                masks_pred_G_V, masks_pred_G_fusion_V = net_G_V_6(imgs)
-                masks_pred_G_sigmoid_A_part = masks_pred_G_fusion_A.detach()
-                masks_pred_G_sigmoid_V_part = masks_pred_G_fusion_V.detach()
-
-                mask_pred,_,_,_ = net_G_6(imgs, masks_pred_G_sigmoid_A_part, masks_pred_G_sigmoid_V_part)
-                mask_pred_tensor_small = mask_pred.clone().detach()
-                mask_pred_tensor_small_6 = F.softmax(mask_pred_tensor_small,dim=1)
-                mask_pred_tensor_small_all+=mask_pred_tensor_small_6.type(torch.FloatTensor)   
-                
-                
-                
-                masks_pred_G_A, masks_pred_G_fusion_A = net_G_A_7(imgs)
-                masks_pred_G_V, masks_pred_G_fusion_V = net_G_V_7(imgs)
-                masks_pred_G_sigmoid_A_part = masks_pred_G_fusion_A.detach()
-                masks_pred_G_sigmoid_V_part = masks_pred_G_fusion_V.detach()
-
-                mask_pred,_,_,_ = net_G_7(imgs, masks_pred_G_sigmoid_A_part, masks_pred_G_sigmoid_V_part)
-                mask_pred_tensor_small = mask_pred.clone().detach()
-                mask_pred_tensor_small_7 = F.softmax(mask_pred_tensor_small,dim=1)
-                mask_pred_tensor_small_all+=mask_pred_tensor_small_7.type(torch.FloatTensor)   
-                
-                
-                
-                masks_pred_G_A, masks_pred_G_fusion_A = net_G_A_8(imgs)
-                masks_pred_G_V, masks_pred_G_fusion_V = net_G_V_8(imgs)
-                masks_pred_G_sigmoid_A_part = masks_pred_G_fusion_A.detach()
-                masks_pred_G_sigmoid_V_part = masks_pred_G_fusion_V.detach()
-
-                mask_pred,_,_,_ = net_G_8(imgs, masks_pred_G_sigmoid_A_part, masks_pred_G_sigmoid_V_part)
-                mask_pred_tensor_small = mask_pred.clone().detach()
-                mask_pred_tensor_small_8 = F.softmax(mask_pred_tensor_small,dim=1)
-                mask_pred_tensor_small_all+=mask_pred_tensor_small_8.type(torch.FloatTensor)   
-                
-                mask_pred_tensor_small_all = (mask_pred_tensor_small_all/8).to(device=device)
-                
-                uncertainty_map = torch.sqrt((torch.square(mask_pred_tensor_small_all-mask_pred_tensor_small_1)+torch.square(mask_pred_tensor_small_all-mask_pred_tensor_small_2)+torch.square(mask_pred_tensor_small_all-mask_pred_tensor_small_3)+torch.square(mask_pred_tensor_small_all-mask_pred_tensor_small_4)+torch.square(mask_pred_tensor_small_all-mask_pred_tensor_small_5)+torch.square(mask_pred_tensor_small_all-mask_pred_tensor_small_6)+torch.square(mask_pred_tensor_small_all-mask_pred_tensor_small_7)+torch.square(mask_pred_tensor_small_all-mask_pred_tensor_small_8))/8)
+            uncertainty_map = torch.sqrt(sum(torch.square(mask_pred_tensor_small_all-mask_pred) for mask_pred in mask_pred_list)/len(models))
             
-                _,prediction_decode = torch.max(mask_pred_tensor_small_all, 1)
-                prediction_decode=prediction_decode.type(torch.FloatTensor)
-                
-                
-                
-                if len(prediction_decode.size())==3:
-                    torch.unsqueeze(prediction_decode,0)
-                if len(uncertainty_map.size())==3:
-                    torch.unsqueeze(uncertainty_map,0)
+            _,prediction_decode = torch.max(mask_pred_tensor_small_all, 1)
+            prediction_decode = prediction_decode.type(torch.FloatTensor)
+            
+            if len(prediction_decode.size())==3:
+                torch.unsqueeze(prediction_decode,0)
+            if len(uncertainty_map.size())==3:
+                torch.unsqueeze(uncertainty_map,0)
                     
-                n_img = prediction_decode.shape[0]
+            n_img = prediction_decode.shape[0]
                 
-                for i in range(n_img):
-                    
+            for i in range(n_img):
+                
+                if save:
                     save_image(uncertainty_map[i,...]*255, seg_uncertainty_small_path+img_name[i]+'.png')
                     save_image(uncertainty_map[i,1,...]*255, seg_uncertainty_small_path+img_name[i]+'_artery.png')
                     save_image(uncertainty_map[i,2,...]*255, seg_uncertainty_small_path+img_name[i]+'_vein.png')
-                    
-                    uncertainty_img = Image.open(seg_uncertainty_small_path+img_name[i]+'.png')
-                    uncertainty_img = uncertainty_img.resize((int(ori_width[i]),int(ori_height[i])))
-                    uncertainty_tensor = torchvision.transforms.ToTensor()(uncertainty_img)
+                else:
+                    uncertainty_resized.append(uncertainty_map[i,...].cpu().numpy())
+
+                uncertainty_img = Image.fromarray((uncertainty_map[i,1,...]*255).cpu().numpy())
+                uncertainty_img = uncertainty_img.resize((int(ori_width[i]),int(ori_height[i])))
+                uncertainty_tensor = torchvision.transforms.ToTensor()(uncertainty_img)
+                
+                if save:
                     save_image(uncertainty_tensor, seg_uncertainty_raw_path+img_name[i]+'.png')
+                else:
+                    uncertainty_raw.append(uncertainty_tensor.cpu().numpy())
                 
                 
-                    img_r = np.zeros((prediction_decode[i,...].shape[0],prediction_decode[i,...].shape[1]))
-                    img_g = np.zeros((prediction_decode[i,...].shape[0],prediction_decode[i,...].shape[1]))
-                    img_b = np.zeros((prediction_decode[i,...].shape[0],prediction_decode[i,...].shape[1]))
-                    
-                    
-                    img_r[prediction_decode[i,...]==1]=255
-                    img_b[prediction_decode[i,...]==2]=255
-                    img_g[prediction_decode[i,...]==3]=255
+                img_r = np.zeros((prediction_decode[i,...].shape[0],prediction_decode[i,...].shape[1]))
+                img_g = np.zeros((prediction_decode[i,...].shape[0],prediction_decode[i,...].shape[1]))
+                img_b = np.zeros((prediction_decode[i,...].shape[0],prediction_decode[i,...].shape[1]))
+                
+                img_r[prediction_decode[i,...]==1]=255
+                img_b[prediction_decode[i,...]==2]=255
+                img_g[prediction_decode[i,...]==3]=255
 
-                    img_b = remove_small_objects(img_b>0, 30, connectivity=5)
-                    img_r = remove_small_objects(img_r>0, 30, connectivity=5)
+                img_b = remove_small_objects(img_b>0, 30, connectivity=5)
+                img_r = remove_small_objects(img_r>0, 30, connectivity=5)
 
-                    img_ = np.concatenate((img_b[...,np.newaxis], img_g[...,np.newaxis], img_r[...,np.newaxis]), axis=2)
-                    
+                img_ = np.concatenate((img_b[...,np.newaxis], img_g[...,np.newaxis], img_r[...,np.newaxis]), axis=2)
+                img_ww = cv2.resize(np.float32(img_)*255, (int(ori_width[i]),int(ori_height[i])), interpolation = cv2.INTER_NEAREST)
+                
+                if save:
                     cv2.imwrite(seg_results_small_path+ img_name[i]+ '.png', np.float32(img_)*255)
-                    
-                    img_ww = cv2.resize(np.float32(img_)*255, (int(ori_width[i]),int(ori_height[i])), interpolation = cv2.INTER_NEAREST)
                     cv2.imwrite(seg_results_raw_path+ img_name[i]+ '.png', img_ww)
+                else:
+                    av_resized.append(np.float32(img_)*255)
+                    av_raw.append(img_ww)
                 
-                
-                
-                pbar.update(imgs.shape[0])
+            pbar.update(imgs.shape[0])
+    if not save: return av_resized, av_raw, uncertainty_resized, uncertainty_raw
 
 
 

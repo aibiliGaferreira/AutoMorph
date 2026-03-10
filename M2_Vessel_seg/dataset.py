@@ -185,21 +185,22 @@ class SEDataset(Dataset):
     
     
 class SEDataset_out(Dataset):
-    def __init__(self, imgs_dir, label_dir, mask_dir, img_size, dataset_name, pthrehold, uniform, train_or=True):
-        self.imgs_dir = imgs_dir
-        self.label_dir = label_dir
-        self.mask_dir = mask_dir
+    def __init__(self, imgs, img_size, pthrehold):
+        self.imgs = imgs
         self.img_size = img_size
-        self.dataset_name = dataset_name
         self.pthrehold = pthrehold
-        self.uniform = uniform
-        self.train_or = train_or
 
-        
-        i = 0
-        self.ids = [splitext(file)[0] for file in listdir(imgs_dir)
-                    if not file.startswith('.')]
-        #logging.info(f'Creating dataset with {(self.ids)} ')
+        if isinstance(imgs, str): # Directory path
+            files = [file for file in sorted(listdir(imgs)) if not file.startswith('.')]
+            self.ids = files
+            self.imgs = [Image.open(imgs + file) for file in files]
+        elif isinstance(imgs, list) and all(isinstance(i, str) for i in imgs): # List of file paths
+            self.ids = imgs
+            self.imgs = [Image.open(file) for file in imgs]
+        else: # List of images
+            self.ids = list(map(str, range(len(imgs))))
+            self.imgs = [Image.fromarray(img) if isinstance(img, np.ndarray) else img for img in imgs]
+
         logging.info(f'Creating dataset with {len(self.ids)} examples')
 
     def __len__(self):
@@ -227,8 +228,7 @@ class SEDataset_out(Dataset):
         return imgs 
 
     @classmethod
-    def preprocess(self, img, dataset_name, img_size, train_or, pthrehold):
-
+    def preprocess(self, img, img_size, pthrehold):
         img_array = np.array(img)
 
         if np.sum(img_array[...,2])==0:
@@ -244,33 +244,20 @@ class SEDataset_out(Dataset):
 
         if len(img_array.shape) == 2:
             img_array = np.expand_dims(img_array, axis=2)
-            
-
         
         img_array = img_array.transpose((2, 0, 1))
-
-
-
-
         return img_array
 
 
     def __getitem__(self, i):
-        idx = self.ids[i]
-        img_file = glob(self.imgs_dir + idx + '.*')
+        img = self.imgs[i]
 
-        assert len(img_file) == 1, \
-            f'Either no image or multiple images found for the ID {idx}: {img_file}'
-
-        img = Image.open(img_file[0])
         ori_width, ori_height = img.size
         img = img.resize(self.img_size)
-        img = self.preprocess(img, self.dataset_name, self.img_size, self.train_or, self.pthrehold)
-
-        i += 1
+        img = self.preprocess(img, self.img_size, self.pthrehold)
         
         return {
-            'name': idx,
+            'name': self.ids[i],
             'width': ori_width,
             'height': ori_height,
             'image': torch.from_numpy(img).type(torch.FloatTensor)

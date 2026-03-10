@@ -146,28 +146,30 @@ class LearningAVSegData(Dataset):
         }
 
 
-    
-    
-    
-    
 
-    
-    
-    
+
+
+
+
+
+
+
 class LearningAVSegData_OOD(Dataset):
-    def __init__(self, imgs_dir, label_dir,  mask_dir, img_size, dataset_name, train_or=True, mask_suffix=''):
-        self.imgs_dir = imgs_dir
-        self.label_dir = label_dir
-        self.mask_dir = mask_dir
-        self.mask_suffix = mask_suffix
+    def __init__(self, imgs, img_size):
+        self.imgs = imgs
         self.img_size = img_size
-        self.dataset_name = dataset_name
-        self.train_or = train_or
         
-        i = 0
-        self.ids = [splitext(file)[0] for file in listdir(imgs_dir)
-                    if not file.startswith('.')]
-        #logging.info(f'Creating dataset with {(self.ids)} ')
+        if isinstance(imgs, str): # Directory path
+            files = [file for file in listdir(imgs) if not file.startswith('.')]
+            self.ids = files
+            self.imgs = [Image.open(imgs + file) for file in files]
+        elif isinstance(imgs, list) and all(isinstance(i, str) for i in imgs): # List of file paths
+            self.ids = imgs
+            self.imgs = [Image.open(file) for file in imgs]
+        else: # List of images
+            self.ids = list(map(str, range(len(imgs))))
+            self.imgs = [Image.fromarray(img) if isinstance(img, np.ndarray) else img for img in imgs]
+        
         logging.info(f'Creating dataset with {len(self.ids)} examples')
 
     def __len__(self):
@@ -183,7 +185,6 @@ class LearningAVSegData_OOD(Dataset):
         elif len(imgs.shape)==2:
             padded=np.zeros((target_h, target_w))
         padded[(target_h-img_h)//2:(target_h-img_h)//2+img_h,(target_w-img_w)//2:(target_w-img_w)//2+img_w,...]=imgs
-        #print(np.shape(padded))
         return padded
 
     @classmethod
@@ -196,7 +197,7 @@ class LearningAVSegData_OOD(Dataset):
         return imgs 
 
     @classmethod
-    def preprocess(self, pil_img, dataset_name, img_size, train_or):
+    def preprocess(self, pil_img, img_size):
 
         newW, newH = img_size[0], img_size[1]
         assert newW > 0 and newH > 0, 'Scale is too small'
@@ -219,25 +220,16 @@ class LearningAVSegData_OOD(Dataset):
     def __getitem__(self, i):
 
         idx = self.ids[i]
-        
-        if self.dataset_name=='HRF-AV':
-            img_file = glob(self.imgs_dir + idx + '.*')
-            
-        else:
-            img_file = glob(self.imgs_dir + idx + '.*')
-        
 
-
-        img = Image.open(img_file[0])
+        img = self.imgs[i]
         ori_width, ori_height = img.size
         img = img.resize(self.img_size)
 
-        img= self.preprocess(img, self.dataset_name, self.img_size, self.train_or)
-        i += 1
+        img= self.preprocess(img, self.img_size)
+        
         return {
             'name': idx,
             'width': ori_width,
             'height': ori_height,
             'image': torch.from_numpy(img).type(torch.FloatTensor)
         }
-
