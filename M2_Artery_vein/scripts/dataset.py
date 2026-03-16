@@ -156,7 +156,6 @@ class LearningAVSegData(Dataset):
 
 class LearningAVSegData_OOD(Dataset):
     def __init__(self, imgs, img_size):
-        self.imgs = imgs
         self.img_size = img_size
         
         if isinstance(imgs, str): # Directory path

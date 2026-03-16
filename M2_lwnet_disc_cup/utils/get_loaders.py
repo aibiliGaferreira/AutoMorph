@@ -78,21 +78,24 @@ class TrainDataset(Dataset):
         return len(self.ids)
 
 class TestDataset(Dataset):
-    def __init__(self, csv_path, tg_size):
-        
-        self.im_list = csv_path
-        #self.gt_list = csv_path + '1st_manual/'
-        #self.mask_list = df.mask_paths
-        #self.transforms = transforms
-        #self.label_values = label_values  # for use in label_encoding
-        
-        self.ids = [splitext(file)[0] for file in listdir(self.im_list)
-                    if not file.startswith('.')]
-        logging.info(f'Creating dataset with {(self.ids)} ')
-        logging.info(f'Creating dataset with {len(self.ids)} examples')
-        
-        #self.mask_list = df.mask_paths
+    def __init__(self, imgs, tg_size):
         self.tg_size = tg_size
+
+        if isinstance(imgs, str): # Directory path
+            files = [file for file in sorted(listdir(imgs)) if not file.startswith('.')]
+            self.ids = files
+            self.im_list = [Image.open(imgs + file) for file in files]
+        elif isinstance(imgs, list) and all(isinstance(i, str) for i in imgs): # List of file paths
+            self.ids = imgs
+            self.im_list = [Image.open(file) for file in imgs]
+        else: # List of images
+            self.ids = list(map(str, range(len(imgs))))
+            self.imgs = [Image.fromarray(img) if isinstance(img, np.ndarray) else img for img in imgs]
+
+        logging.info(f'Creating dataset with {len(self.ids)} examples')
+
+    def __len__(self):
+        return len(self.ids)
 
     def crop_to_fov(self, img, mask):
         mask = np.array(mask).astype(int)
@@ -104,8 +107,7 @@ class TestDataset(Dataset):
         # # load image and mask
         idx = self.ids[index]
 
-        img_file = glob(self.im_list + idx + '.*')  
-        img = Image.open(img_file[0])
+        img = self.imgs[index]
         
         #mask = Image.open(self.mask_list[index]).convert('L')
         #img, coords_crop = self.crop_to_fov(img, mask)
@@ -128,9 +130,6 @@ class TestDataset(Dataset):
             'image': img,
             'original_sz': original_sz
         }
-
-    def __len__(self):
-        return len(self.ids)
 
     
 
@@ -215,12 +214,12 @@ def get_train_val_loaders(csv_path_train, csv_path_val, seed_num, batch_size=4, 
     val_loader = DataLoader(dataset=val_dataset, batch_size=batch_size, num_workers=num_workers, pin_memory=torch.cuda.is_available())
     return train_loader, val_loader
 
-def get_test_dataset(data_path, csv_path='test.csv', tg_size=(512, 512)):
+def get_test_dataset(data_path, tg_size=(512, 512)):
     # csv_path will only not be test.csv when we want to build training set predictions
     #path_test_csv = osp.join(data_path, csv_path)
     path_test_csv = data_path
-    test_dataset = TestDataset(csv_path=path_test_csv, tg_size=tg_size)
-    test_loader = DataLoader(dataset=test_dataset, batch_size=16, num_workers=8, pin_memory=False)
+    test_dataset = TestDataset(imgs=path_test_csv, tg_size=tg_size)
+    test_loader = DataLoader(dataset=test_dataset, batch_size=16, num_workers=0, pin_memory=False)
 
     return test_loader
 

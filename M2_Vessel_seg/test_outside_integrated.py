@@ -44,13 +44,13 @@ def filter_frag(images):
         else: 
             img = i.squeeze()
         img2=img>0
-        img2 = remove_small_objects(img2, 30, connectivity=5)
+        img2 = remove_small_objects(img2, max_size=30, connectivity=5)
         
         if isinstance(images, str):
             if not os.path.isdir(data_path + 'binary_process/'): os.makedirs(data_path + 'binary_process/') 
             io.imsave(data_path + 'binary_process/' + i , 255*(img2.astype('uint8')),check_contrast=False)
         else:
-            binary_process_list.append(img2)
+            binary_process_list.append(img2.astype('uint8'))
 
         skeleton = skeletonize(img2)
         if isinstance(images, str):

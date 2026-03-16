@@ -53,8 +53,8 @@ def filter_frag(images):
         img2=img>0
         img_r = img2[...,0] + img2[...,1]
         img_b = img2[...,2] + img2[...,1]
-        img_r = remove_small_objects(img_r, 30, connectivity=5)
-        img_b = remove_small_objects(img_b, 30, connectivity=5)
+        img_r = remove_small_objects(img_r, max_size=30, connectivity=5)
+        img_b = remove_small_objects(img_b, max_size=30, connectivity=5)
         
         if isinstance(images, str):
             if not os.path.isdir(data_path + 'artery_binary_process/'):
@@ -201,8 +201,8 @@ def test_net(models, loader, device, save=False):
                 img_b[prediction_decode[i,...]==2]=255
                 img_g[prediction_decode[i,...]==3]=255
 
-                img_b = remove_small_objects(img_b>0, 30, connectivity=5)
-                img_r = remove_small_objects(img_r>0, 30, connectivity=5)
+                img_b = remove_small_objects(img_b>0, max_size=30, connectivity=5)
+                img_r = remove_small_objects(img_r>0, max_size=30, connectivity=5)
 
                 img_ = np.concatenate((img_b[...,np.newaxis], img_g[...,np.newaxis], img_r[...,np.newaxis]), axis=2)
                 img_ww = cv2.resize(np.float32(img_)*255, (int(ori_width[i]),int(ori_height[i])), interpolation = cv2.INTER_NEAREST)
@@ -265,7 +265,7 @@ if __name__ == '__main__':
 
 
     dataset = LearningAVSegData_OOD(test_dir, test_label, test_mask, img_size, dataset_name=dataset_name, train_or=False)
-    test_loader = DataLoader(dataset, batch_size=args.batchsize, shuffle=False, num_workers=8, pin_memory=False, drop_last=False)
+    test_loader = DataLoader(dataset, batch_size=args.batchsize, shuffle=False, num_workers=0, pin_memory=False, drop_last=False)
 
 
     net_G_1 = Generator_main(input_channels=3, n_filters = 32, n_classes=4, bilinear=False)
