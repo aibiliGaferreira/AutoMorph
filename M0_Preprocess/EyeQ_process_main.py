@@ -7,7 +7,7 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 AUTOMORPH_DATA = os.getenv('AUTOMORPH_DATA','..')
 
-def process(image_list, save_path, resolution_list = None):
+def process(images, save_path, resolution_list = None):
     
     radius_list = []
     centre_list_w = []
@@ -16,6 +16,9 @@ def process(image_list, save_path, resolution_list = None):
     list_resolution = []
     scale_resolution = []
     save = save_path is not None
+
+    if isinstance(images, str) and os.path.isfile(images):
+        images = [images]
     
     if resolution_list is None:
         if os.path.exists(f'{AUTOMORPH_DATA}/resolution_information.csv'):
@@ -23,7 +26,7 @@ def process(image_list, save_path, resolution_list = None):
     elif type(resolution_list) == str:
         resolution_list = pd.read_csv(resolution_list)
     img_list = []
-    for index, image_path in enumerate(image_list):
+    for index, image_path in enumerate(images):
         if isinstance(image_path, str):
             resolution_ = resolution_list['res'][resolution_list['fundus']==os.path.basename(image_path)].values[0] if resolution_list is not None else 0.008
             list_resolution.append(resolution_)
