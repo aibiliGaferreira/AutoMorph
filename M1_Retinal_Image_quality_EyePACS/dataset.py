@@ -101,6 +101,9 @@ class BasicDataset_OUT(Dataset):
         elif isinstance(imgs, list) and all(isinstance(i, str) for i in imgs): # List of file paths
             self.ids = imgs
             self.imgs = [np.array(Image.open(file)) for file in imgs]
+        elif isinstance(imgs, np.ndarray) and imgs.ndim == 3: # Single memory image
+            self.ids = ["0"]
+            self.imgs = [imgs]
         else: # List of images
             self.ids = list(map(str, range(len(imgs))))
             self.imgs = imgs
