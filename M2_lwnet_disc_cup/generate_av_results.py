@@ -58,102 +58,109 @@ def intersection(mask,vessel_, it_x, it_y):
     
     
 
-def optic_disc_centre(images, binary_process=None, artery_process=None, vein_process=None, binary_skeleton=None, artery_skelenton=None, vein_skeleton=None, save=False, resolution_csv=None):
-    result_path = f'{AUTOMORPH_DATA}/Results/M2/optic_disc_cup/resized/'
-    if os.path.exists(result_path+'.ipynb_checkpoints'):
-        shutil.rmtree(result_path+'.ipynb_checkpoints')
-    
-    if save:
-        optic_binary_result_path = f'{AUTOMORPH_DATA}/Results/M3/Disc_centred/'
-        macular_binary_result_path = f'{AUTOMORPH_DATA}/Results/M3/Macular_centred/'
-    
-        disc_process_binary_vessel_path = binary_vessel_path + 'disc_centred_binary_process/'
-        disc_process_artery_path = artery_vein_path + 'disc_centred_artery_process/'
-        disc_process_vein_path = artery_vein_path + 'disc_centred_vein_process/'
-    
-        disc_skeleton_binary_vessel_path = binary_vessel_path + 'disc_centred_binary_skeleton/'
-        disc_skeleton_artery_path = artery_vein_path + 'disc_centred_artery_skeleton/'
-        disc_skeleton_vein_path = artery_vein_path + 'disc_centred_vein_skeleton/'
-     
-        B_optic_process_binary_vessel_path = binary_vessel_path + 'Zone_B_disc_centred_binary_process/'
-        B_optic_process_artery_path = artery_vein_path + 'Zone_B_disc_centred_artery_process/'
-        B_optic_process_vein_path = artery_vein_path + 'Zone_B_disc_centred_vein_process/'
-    
-        B_optic_skeleton_binary_vessel_path = binary_vessel_path + 'Zone_B_disc_centred_binary_skeleton/'
-        B_optic_skeleton_artery_path = artery_vein_path + 'Zone_B_disc_centred_artery_skeleton/'
-        B_optic_skeleton_vein_path = artery_vein_path + 'Zone_B_disc_centred_vein_skeleton/'
-
-        C_optic_process_binary_vessel_path = binary_vessel_path + 'Zone_C_disc_centred_binary_process/'
-        C_optic_process_artery_path = artery_vein_path + 'Zone_C_disc_centred_artery_process/'
-        C_optic_process_vein_path = artery_vein_path + 'Zone_C_disc_centred_vein_process/'
-    
-        C_optic_skeleton_binary_vessel_path = binary_vessel_path + 'Zone_C_disc_centred_binary_skeleton/'
-        C_optic_skeleton_artery_path = artery_vein_path + 'Zone_C_disc_centred_artery_skeleton/'
-        C_optic_skeleton_vein_path = artery_vein_path + 'Zone_C_disc_centred_vein_skeleton/'
-    
-        macular_process_binary_vessel_path = binary_vessel_path + 'macular_centred_binary_process/'
-        macular_process_artery_path = artery_vein_path + 'macular_centred_artery_process/'
-        macular_process_vein_path = artery_vein_path + 'macular_centred_vein_process/'
-    
-        macular_skeleton_binary_vessel_path = binary_vessel_path + 'macular_centred_binary_skeleton/'
-        macular_skeleton_artery_path = artery_vein_path + 'macular_centred_artery_skeleton/'
-        macular_skeleton_vein_path = artery_vein_path + 'macular_centred_vein_skeleton/'
-    
-        zone_b_macular_process_binary_vessel_path = binary_vessel_path + 'macular_Zone_B_centred_binary_process/'
-        zone_b_macular_process_artery_path = artery_vein_path + 'macular_Zone_B_centred_artery_process/'
-        zone_b_macular_process_vein_path = artery_vein_path + 'macular_Zone_B_centred_vein_process/'
-    
-        zone_b_macular_skeleton_binary_vessel_path = binary_vessel_path + 'macular_Zone_B_centred_binary_skeleton/'
-        zone_b_macular_skeleton_artery_path = artery_vein_path + 'macular_Zone_B_centred_artery_skeleton/'
-        zone_b_macular_skeleton_vein_path = artery_vein_path + 'macular_Zone_B_centred_vein_skeleton/'
-    
-        zone_c_macular_process_binary_vessel_path = binary_vessel_path + 'macular_Zone_C_centred_binary_process/'
-        zone_c_macular_process_artery_path = artery_vein_path + 'macular_Zone_C_centred_artery_process/'
-        zone_c_macular_process_vein_path = artery_vein_path + 'macular_Zone_C_centred_vein_process/'
-    
-        zone_c_macular_skeleton_binary_vessel_path = binary_vessel_path + 'macular_Zone_C_centred_binary_skeleton/'
-        zone_c_macular_skeleton_artery_path = artery_vein_path + 'macular_Zone_C_centred_artery_skeleton/'
-        zone_c_macular_skeleton_vein_path = artery_vein_path + 'macular_Zone_C_centred_vein_skeleton/'
-    
+def optic_disc_centre(images, binary_process=None, artery_process=None, vein_process=None, binary_skeleton=None, artery_skeleton=None, vein_skeleton=None, save_path=None, resolution_csv=None):
+    if save_path is not None:
+        if os.path.exists(save_path+'.ipynb_checkpoints'):
+            shutil.rmtree(save_path+'.ipynb_checkpoints')
+        
+        optic_binary_result_path = os.path.join(save_path,'Disc_centred/')
+        macular_binary_result_path = os.path.join(save_path,'Macular_centred/')
         if not os.path.exists(optic_binary_result_path): os.makedirs(optic_binary_result_path)
         if not os.path.exists(macular_binary_result_path): os.makedirs(macular_binary_result_path)
-        if not os.path.exists(disc_process_binary_vessel_path): os.makedirs(disc_process_binary_vessel_path)
-        if not os.path.exists(disc_process_artery_path): os.makedirs(disc_process_artery_path)
-        if not os.path.exists(disc_process_vein_path): os.makedirs(disc_process_vein_path)
-        if not os.path.exists(disc_skeleton_binary_vessel_path): os.makedirs(disc_skeleton_binary_vessel_path)
-        if not os.path.exists(disc_skeleton_artery_path): os.makedirs(disc_skeleton_artery_path)
-        if not os.path.exists(disc_skeleton_vein_path): os.makedirs(disc_skeleton_vein_path)
-        if not os.path.exists(B_optic_process_binary_vessel_path): os.makedirs(B_optic_process_binary_vessel_path)
-        if not os.path.exists(B_optic_process_artery_path): os.makedirs(B_optic_process_artery_path)
-        if not os.path.exists(B_optic_process_vein_path): os.makedirs(B_optic_process_vein_path)
-        if not os.path.exists(B_optic_skeleton_binary_vessel_path): os.makedirs(B_optic_skeleton_binary_vessel_path)
-        if not os.path.exists(B_optic_skeleton_artery_path): os.makedirs(B_optic_skeleton_artery_path)
-        if not os.path.exists(B_optic_skeleton_vein_path): os.makedirs(B_optic_skeleton_vein_path)
-        if not os.path.exists(C_optic_process_binary_vessel_path): os.makedirs(C_optic_process_binary_vessel_path)
-        if not os.path.exists(C_optic_process_artery_path): os.makedirs(C_optic_process_artery_path)
-        if not os.path.exists(C_optic_process_vein_path): os.makedirs(C_optic_process_vein_path)
-        if not os.path.exists(C_optic_skeleton_binary_vessel_path): os.makedirs(C_optic_skeleton_binary_vessel_path)
-        if not os.path.exists(C_optic_skeleton_artery_path): os.makedirs(C_optic_skeleton_artery_path)
-        if not os.path.exists(C_optic_skeleton_vein_path): os.makedirs(C_optic_skeleton_vein_path)
-        if not os.path.exists(macular_process_binary_vessel_path): os.makedirs(macular_process_binary_vessel_path)
-        if not os.path.exists(macular_process_artery_path): os.makedirs(macular_process_artery_path)
-        if not os.path.exists(macular_process_vein_path): os.makedirs(macular_process_vein_path)
-        if not os.path.exists(macular_skeleton_binary_vessel_path): os.makedirs(macular_skeleton_binary_vessel_path)
-        if not os.path.exists(macular_skeleton_artery_path): os.makedirs(macular_skeleton_artery_path)
-        if not os.path.exists(macular_skeleton_vein_path): os.makedirs(macular_skeleton_vein_path)  
-        if not os.path.exists(zone_b_macular_process_binary_vessel_path): os.makedirs(zone_b_macular_process_binary_vessel_path)
-        if not os.path.exists(zone_b_macular_process_artery_path): os.makedirs(zone_b_macular_process_artery_path)
-        if not os.path.exists(zone_b_macular_process_vein_path): os.makedirs(zone_b_macular_process_vein_path)
-        if not os.path.exists(zone_b_macular_skeleton_binary_vessel_path): os.makedirs(zone_b_macular_skeleton_binary_vessel_path)
-        if not os.path.exists(zone_b_macular_skeleton_artery_path): os.makedirs(zone_b_macular_skeleton_artery_path)
-        if not os.path.exists(zone_b_macular_skeleton_vein_path): os.makedirs(zone_b_macular_skeleton_vein_path)
-        if not os.path.exists(zone_c_macular_process_binary_vessel_path): os.makedirs(zone_c_macular_process_binary_vessel_path)
-        if not os.path.exists(zone_c_macular_process_artery_path): os.makedirs(zone_c_macular_process_artery_path)
-        if not os.path.exists(zone_c_macular_process_vein_path): os.makedirs(zone_c_macular_process_vein_path)
-        if not os.path.exists(zone_c_macular_skeleton_binary_vessel_path): os.makedirs(zone_c_macular_skeleton_binary_vessel_path)
-        if not os.path.exists(zone_c_macular_skeleton_artery_path): os.makedirs(zone_c_macular_skeleton_artery_path)
-        if not os.path.exists(zone_c_macular_skeleton_vein_path): os.makedirs(zone_c_macular_skeleton_vein_path)
-        
+    
+        if binary_process is not None:
+            if isinstance(binary_process, str) and not os.path.isfile(binary_process):
+                binary_vessel_path = binary_process
+            else:
+                binary_vessel_path = os.path.join(save_path,'binary_vessel/')
+            disc_process_binary_vessel_path = binary_vessel_path + 'disc_centred_binary_process/'
+            disc_skeleton_binary_vessel_path = binary_vessel_path + 'disc_centred_binary_skeleton/'
+            B_optic_process_binary_vessel_path = binary_vessel_path + 'Zone_B_disc_centred_binary_process/'
+            B_optic_skeleton_binary_vessel_path = binary_vessel_path + 'Zone_B_disc_centred_binary_skeleton/'
+            C_optic_process_binary_vessel_path = binary_vessel_path + 'Zone_C_disc_centred_binary_process/'
+            C_optic_skeleton_binary_vessel_path = binary_vessel_path + 'Zone_C_disc_centred_binary_skeleton/'
+            macular_process_binary_vessel_path = binary_vessel_path + 'macular_centred_binary_process/'
+            macular_skeleton_binary_vessel_path = binary_vessel_path + 'macular_centred_binary_skeleton/'
+            zone_b_macular_process_binary_vessel_path = binary_vessel_path + 'macular_Zone_B_centred_binary_process/'
+            zone_b_macular_skeleton_binary_vessel_path = binary_vessel_path + 'macular_Zone_B_centred_binary_skeleton/'
+            zone_c_macular_process_binary_vessel_path = binary_vessel_path + 'macular_Zone_C_centred_binary_process/'
+            zone_c_macular_skeleton_binary_vessel_path = binary_vessel_path + 'macular_Zone_C_centred_binary_skeleton/'
+            
+            if not os.path.exists(disc_process_binary_vessel_path): os.makedirs(disc_process_binary_vessel_path)
+            if not os.path.exists(disc_skeleton_binary_vessel_path): os.makedirs(disc_skeleton_binary_vessel_path)
+            if not os.path.exists(B_optic_process_binary_vessel_path): os.makedirs(B_optic_process_binary_vessel_path)
+            if not os.path.exists(B_optic_skeleton_binary_vessel_path): os.makedirs(B_optic_skeleton_binary_vessel_path)
+            if not os.path.exists(C_optic_process_binary_vessel_path): os.makedirs(C_optic_process_binary_vessel_path)
+            if not os.path.exists(C_optic_skeleton_binary_vessel_path): os.makedirs(C_optic_skeleton_binary_vessel_path)
+            if not os.path.exists(macular_process_binary_vessel_path): os.makedirs(macular_process_binary_vessel_path)
+            if not os.path.exists(macular_skeleton_binary_vessel_path): os.makedirs(macular_skeleton_binary_vessel_path)
+            if not os.path.exists(zone_b_macular_process_binary_vessel_path): os.makedirs(zone_b_macular_process_binary_vessel_path)
+            if not os.path.exists(zone_b_macular_skeleton_binary_vessel_path): os.makedirs(zone_b_macular_skeleton_binary_vessel_path)
+            if not os.path.exists(zone_c_macular_process_binary_vessel_path): os.makedirs(zone_c_macular_process_binary_vessel_path)
+            if not os.path.exists(zone_c_macular_skeleton_binary_vessel_path): os.makedirs(zone_c_macular_skeleton_binary_vessel_path)
+
+        if artery_process is not None:
+            if isinstance(artery_process, str) and not os.path.isfile(artery_process):
+                artery_vein_path = artery_process
+            else:
+                artery_vein_path = os.path.join(save_path,'artery_vein/')
+            disc_process_artery_path = artery_vein_path + 'disc_centred_artery_process/'
+            disc_skeleton_artery_path = artery_vein_path + 'disc_centred_artery_skeleton/'
+            B_optic_process_artery_path = artery_vein_path + 'Zone_B_disc_centred_artery_process/'
+            B_optic_skeleton_artery_path = artery_vein_path + 'Zone_B_disc_centred_artery_skeleton/'
+            C_optic_process_artery_path = artery_vein_path + 'Zone_C_disc_centred_artery_process/'
+            C_optic_skeleton_artery_path = artery_vein_path + 'Zone_C_disc_centred_artery_skeleton/'
+            macular_process_artery_path = artery_vein_path + 'macular_centred_artery_process/'
+            macular_skeleton_artery_path = artery_vein_path + 'macular_centred_artery_skeleton/'
+            zone_b_macular_process_artery_path = artery_vein_path + 'macular_Zone_B_centred_artery_process/'
+            zone_b_macular_skeleton_artery_path = artery_vein_path + 'macular_Zone_B_centred_artery_skeleton/'
+            zone_c_macular_process_artery_path = artery_vein_path + 'macular_Zone_C_centred_artery_process/'
+            zone_c_macular_skeleton_artery_path = artery_vein_path + 'macular_Zone_C_centred_artery_skeleton/'
+
+            if not os.path.exists(disc_process_artery_path): os.makedirs(disc_process_artery_path)
+            if not os.path.exists(disc_skeleton_artery_path): os.makedirs(disc_skeleton_artery_path)
+            if not os.path.exists(B_optic_process_artery_path): os.makedirs(B_optic_process_artery_path)
+            if not os.path.exists(B_optic_skeleton_artery_path): os.makedirs(B_optic_skeleton_artery_path)
+            if not os.path.exists(C_optic_process_artery_path): os.makedirs(C_optic_process_artery_path)
+            if not os.path.exists(C_optic_skeleton_artery_path): os.makedirs(C_optic_skeleton_artery_path)
+            if not os.path.exists(macular_process_artery_path): os.makedirs(macular_process_artery_path)
+            if not os.path.exists(macular_skeleton_artery_path): os.makedirs(macular_skeleton_artery_path)
+            if not os.path.exists(zone_b_macular_process_artery_path): os.makedirs(zone_b_macular_process_artery_path)
+            if not os.path.exists(zone_b_macular_skeleton_artery_path): os.makedirs(zone_b_macular_skeleton_artery_path)
+            if not os.path.exists(zone_c_macular_process_artery_path): os.makedirs(zone_c_macular_process_artery_path)
+            if not os.path.exists(zone_c_macular_skeleton_artery_path): os.makedirs(zone_c_macular_skeleton_artery_path)
+
+        if vein_process is not None:
+            if isinstance(vein_process, str) and not os.path.isfile(vein_process):
+                artery_vein_path = vein_process
+            else:
+                artery_vein_path = os.path.join(save_path,'artery_vein/')
+            disc_process_vein_path = artery_vein_path + 'disc_centred_vein_process/'
+            disc_skeleton_vein_path = artery_vein_path + 'disc_centred_vein_skeleton/'
+            B_optic_process_vein_path = artery_vein_path + 'Zone_B_disc_centred_vein_process/'
+            B_optic_skeleton_vein_path = artery_vein_path + 'Zone_B_disc_centred_vein_skeleton/'
+            C_optic_process_vein_path = artery_vein_path + 'Zone_C_disc_centred_vein_process/'
+            C_optic_skeleton_vein_path = artery_vein_path + 'Zone_C_disc_centred_vein_skeleton/'
+            macular_process_vein_path = artery_vein_path + 'macular_centred_vein_process/'
+            macular_skeleton_vein_path = artery_vein_path + 'macular_centred_vein_skeleton/'
+            zone_b_macular_process_vein_path = artery_vein_path + 'macular_Zone_B_centred_vein_process/'
+            zone_b_macular_skeleton_vein_path = artery_vein_path + 'macular_Zone_B_centred_vein_skeleton/'
+            zone_c_macular_process_vein_path = artery_vein_path + 'macular_Zone_C_centred_vein_process/'
+            zone_c_macular_skeleton_vein_path = artery_vein_path + 'macular_Zone_C_centred_vein_skeleton/'
+    
+            if not os.path.exists(disc_process_vein_path): os.makedirs(disc_process_vein_path)
+            if not os.path.exists(disc_skeleton_vein_path): os.makedirs(disc_skeleton_vein_path)
+            if not os.path.exists(B_optic_process_vein_path): os.makedirs(B_optic_process_vein_path)
+            if not os.path.exists(B_optic_skeleton_vein_path): os.makedirs(B_optic_skeleton_vein_path)
+            if not os.path.exists(C_optic_process_vein_path): os.makedirs(C_optic_process_vein_path)
+            if not os.path.exists(C_optic_skeleton_vein_path): os.makedirs(C_optic_skeleton_vein_path)
+            if not os.path.exists(macular_process_vein_path): os.makedirs(macular_process_vein_path)
+            if not os.path.exists(macular_skeleton_vein_path): os.makedirs(macular_skeleton_vein_path)
+            if not os.path.exists(zone_b_macular_process_vein_path): os.makedirs(zone_b_macular_process_vein_path)
+            if not os.path.exists(zone_b_macular_skeleton_vein_path): os.makedirs(zone_b_macular_skeleton_vein_path)
+            if not os.path.exists(zone_c_macular_process_vein_path): os.makedirs(zone_c_macular_process_vein_path)
+            if not os.path.exists(zone_c_macular_skeleton_vein_path): os.makedirs(zone_c_macular_skeleton_vein_path)
+    
     optic_vertical_CDR,optic_vertical_disc,optic_vertical_cup = [],[],[]
     optic_horizontal_CDR,optic_horizontal_disc,optic_horizontal_cup = [],[],[]
     
@@ -163,36 +170,35 @@ def optic_disc_centre(images, binary_process=None, artery_process=None, vein_pro
     optic_centre_list = []
     macular_centre_list = []
 
-    if not save:
-        binary_process_Bs = []
-        artery_process_Bs = []
-        vein_process_Bs = []
-        binary_skeleton_Bs = []
-        artery_skeleton_Bs = []
-        vein_skeleton_Bs = []
+    binary_process_Bs = []
+    artery_process_Bs = []
+    vein_process_Bs = []
+    binary_skeleton_Bs = []
+    artery_skeleton_Bs = []
+    vein_skeleton_Bs = []
 
-        binary_process_Cs = []
-        artery_process_Cs = []
-        vein_process_Cs = []
-        binary_skeleton_Cs = []
-        artery_skeleton_Cs = []
-        vein_skeleton_Cs = []
-    if save:
-        disc_cup_list = sorted(os.listdir(result_path))
+    binary_process_Cs = []
+    artery_process_Cs = []
+    vein_process_Cs = []
+    binary_skeleton_Cs = []
+    artery_skeleton_Cs = []
+    vein_skeleton_Cs = []
+
+    if isinstance(images, str):
+        disc_cup_list = sorted(os.listdir(images))
     else:
         disc_cup_list = images
     
-    if resolution_csv is None: # Default
-        resolution_list = pd.read_csv(result_path.split('M2')[0]+'M0/crop_info.csv')
+    if resolution_csv is None:
+        raise ValueError('Please provide resolution_csv for the dataset')
     elif isinstance(resolution_csv, str): # Path
         resolution_list = pd.read_csv(resolution_csv)
     else: # DataFrame
         resolution_list = resolution_csv
     
     for index, i in enumerate(disc_cup_list):
-        
         if isinstance(i, str):
-            path_ = result_path+i
+            path_ = os.path.join(images, i)
             disc_cup_ = cv2.imread(path_)
         else:
             disc_cup_ = i
@@ -206,8 +212,8 @@ def optic_disc_centre(images, binary_process=None, artery_process=None, vein_pro
         try:
             disc_ = disc_cup_912[...,2]
             cup_ = disc_cup_912[...,0]
-            
             ## judgement the optic disc/cup segmentation
+            print(disc_.shape)
             disc_mask = measure.label(disc_)
             regions = measure.regionprops(disc_mask)
             regions.sort(key=lambda x: x.area, reverse=True)
@@ -215,7 +221,7 @@ def optic_disc_centre(images, binary_process=None, artery_process=None, vein_pro
                 for rg in regions[2:]:
                     disc_mask[rg.coords[:,0], rg.coords[:,1]] = 0
             disc_[disc_mask!=0] = 255
-            
+
             cup_mask = measure.label(cup_)                       
             regions = measure.regionprops(cup_mask)
             regions.sort(key=lambda x: x.area, reverse=True)
@@ -229,7 +235,6 @@ def optic_disc_centre(images, binary_process=None, artery_process=None, vein_pro
             disc_index_height = disc_index[0]
             disc_horizontal_width = np.max(disc_index_width)-np.min(disc_index_width)
             disc_vertical_height = np.max(disc_index_height)-np.min(disc_index_height)
-
             
             cup_index = np.where(cup_>0)
             cup_index_width = cup_index[1]
@@ -239,11 +244,8 @@ def optic_disc_centre(images, binary_process=None, artery_process=None, vein_pro
             
             cup_width_centre = np.mean(cup_index_width)
             cup_height_centre = np.mean(cup_index_height)
-            
                 
             if disc_horizontal_width<(disc_.shape[0]/3) and disc_vertical_height<(disc_.shape[1]/3) and cup_width_centre<=np.max(disc_index_width) and cup_width_centre>=np.min(disc_index_width) and cup_height_centre<=np.max(disc_index_height) and cup_height_centre>=np.min(disc_index_height) and cup_vertical_height<disc_vertical_height and cup_horizontal_width<disc_horizontal_width:
-            
-
                 whole_index = np.where(disc_cup_912>0)
                 whole_index_width = whole_index[1]
                 whole_index_height = whole_index[0]
@@ -251,84 +253,90 @@ def optic_disc_centre(images, binary_process=None, artery_process=None, vein_pro
                 horizontal_distance = np.absolute(np.mean(whole_index_height)-disc_cup_912.shape[1]/2)
                 vertical_distance = np.absolute(np.mean(whole_index_width)-disc_cup_912.shape[0]/2)
                 distance_ = np.sqrt(np.square(horizontal_distance)+np.square(vertical_distance))
-
-                if binary_process and binary_skeleton:
-                    binary_process_ = binary_process[index]
-                    binary_skeleton_ = binary_skeleton[index]
-                else:
-                    binary_process_ = cv2.imread(binary_vessel_path+'binary_process/'+i)[...,0]
-                    binary_skeleton_ = cv2.imread(binary_vessel_path+'binary_skeleton/'+i)[...,0]
-                
-                if artery_process and artery_skelenton:
-                    artery_process_ = artery_process[index]
-                    artery_skeleton_ = artery_skelenton[index]
-                else:
-                    artery_process_ = cv2.imread(artery_vein_path+'artery_binary_process/'+i)[...,0]
-                    artery_skeleton_ = cv2.imread(artery_vein_path+'artery_binary_skeleton/'+i)[...,0]
-
-                if vein_process and vein_skeleton:
-                    vein_process_ = vein_process[index]
-                    vein_skeleton_ = vein_skeleton[index]
-                else: # TODO: Assert that when one of the process/skeleton is given, images is the directory path
-                    vein_process_ = cv2.imread(artery_vein_path+'vein_binary_process/'+i)[...,0]
-                    vein_skeleton_ = cv2.imread(artery_vein_path+'vein_binary_skeleton/'+i)[...,0]
-
-                # remove the intersection of binary_skeleton_
-                ignored_pixels = 1
-
-                mask_ = np.ones((binary_skeleton_.shape))
-                for it_x in range(ignored_pixels, mask_.shape[0] - ignored_pixels):
-                    for it_y in range(ignored_pixels, mask_.shape[1] - ignored_pixels):
-                        if binary_skeleton_[it_x, it_y] > 0:
-                            mask,active_neighbours = intersection(mask_,binary_skeleton_, it_x, it_y)
-
-                binary_skeleton_ = binary_skeleton_ * mask
-
-                # remove the intersection of artery_skeleton_
-                mask_ = np.ones((artery_skeleton_.shape))
-                for it_x in range(ignored_pixels, mask_.shape[0] - ignored_pixels):
-                    for it_y in range(ignored_pixels, mask_.shape[1] - ignored_pixels):
-                        if artery_skeleton_[it_x, it_y] > 0:
-                            mask,active_neighbours = intersection(mask_,artery_skeleton_, it_x, it_y)
-
-                artery_skeleton_ = artery_skeleton_ * mask
-
-                # remove the intersection of vein_skeleton_
-                mask_ = np.ones((vein_skeleton_.shape))
-                for it_x in range(ignored_pixels, mask_.shape[0] - ignored_pixels):
-                    for it_y in range(ignored_pixels, mask_.shape[1] - ignored_pixels):
-                        if vein_skeleton_[it_x, it_y] > 0:
-                            mask,active_neighbours = intersection(mask_,vein_skeleton_, it_x, it_y)
-
-                vein_skeleton_ = vein_skeleton_ * mask
-
-
-                zone_mask_B = np.zeros(binary_process_.shape)
-                zone_mask_C = np.zeros(binary_process_.shape)
+     
+                #zone_mask_B = np.zeros(binary_process_.shape)
+                #zone_mask_C = np.zeros(binary_process_.shape)
+                zone_mask_B = np.zeros(disc_cup_912.shape[:2])
+                zone_mask_C = np.zeros(disc_cup_912.shape[:2])
                 zone_centre = (int(np.mean(whole_index_width)), int(np.mean(whole_index_height)))
                 radius = max(int(disc_horizontal_width/2),int(disc_vertical_height/2))
                 cv2.circle(zone_mask_B,zone_centre,radius=3*radius,color=(255,255,255),thickness=-1)
                 cv2.circle(zone_mask_B,zone_centre,radius=2*radius,color=(0,0,0),thickness=-1)
                 zone_mask_B = zone_mask_B/255
 
-                binary_process_B = binary_process_*zone_mask_B 
-                artery_process_B = artery_process_*zone_mask_B 
-                vein_process_B = vein_process_*zone_mask_B
-                binary_skeleton_B = binary_skeleton_*zone_mask_B
-                artery_skeleton_B = artery_skeleton_*zone_mask_B
-                vein_skeleton_B = vein_skeleton_*zone_mask_B
-
                 cv2.circle(zone_mask_C,zone_centre,radius=5*radius,color=(255,255,255),thickness=-1)
                 cv2.circle(zone_mask_C,zone_centre,radius=2*radius,color=(0,0,0),thickness=-1)
                 zone_mask_C = zone_mask_C/255
 
-                binary_process_C = binary_process_*zone_mask_C 
-                artery_process_C = artery_process_*zone_mask_C 
-                vein_process_C = vein_process_*zone_mask_C
-                binary_skeleton_C = binary_skeleton_*zone_mask_C
-                artery_skeleton_C = artery_skeleton_*zone_mask_C
-                vein_skeleton_C = vein_skeleton_*zone_mask_C
+                ignored_pixels = 1
+                if binary_process is not None:
+                    if isinstance(binary_process, str) and not os.path.isfile(binary_process): binary_process_ = cv2.imread(binary_vessel_path+'binary_process/'+i)[...,0]
+                    else: binary_process_ = binary_process[index]
 
+                    if binary_process_.shape != zone_mask_B.shape: binary_process_ = cv2.resize(binary_process_, (zone_mask_B.shape[1], zone_mask_B.shape[0]), interpolation=cv2.INTER_NEAREST)
+                    binary_process_B = binary_process_*zone_mask_B
+                    binary_process_C = binary_process_*zone_mask_C
+                  
+                if binary_skeleton is not None:
+                    if isinstance(binary_skeleton, str) and not os.path.isfile(binary_skeleton): binary_skeleton_ = cv2.imread(binary_vessel_path+'binary_skeleton/'+i)[...,0]
+                    else: binary_skeleton_ = binary_skeleton[index]
+                    # remove the intersection of binary_skeleton_
+                    mask_ = np.ones((binary_skeleton_.shape))
+                    for it_x in range(ignored_pixels, mask_.shape[0] - ignored_pixels):
+                        for it_y in range(ignored_pixels, mask_.shape[1] - ignored_pixels):
+                            if binary_skeleton_[it_x, it_y] > 0:
+                                mask,active_neighbours = intersection(mask_,binary_skeleton_, it_x, it_y)
+                    binary_skeleton_ = binary_skeleton_ * mask
+
+                    if binary_skeleton_.shape != zone_mask_B.shape: binary_skeleton_ = cv2.resize(binary_skeleton_, (zone_mask_B.shape[1], zone_mask_B.shape[0]), interpolation=cv2.INTER_NEAREST)
+                    binary_skeleton_B = binary_skeleton_*zone_mask_B
+                    binary_skeleton_C = binary_skeleton_*zone_mask_C
+
+                if artery_process is not None:
+                    if isinstance(artery_process, str) and not os.path.isfile(artery_process): artery_process_ = cv2.imread(artery_vein_path+'artery_binary_process/'+i)[...,0]
+                    else: artery_process_ = artery_process[index]
+
+                    if artery_process_.shape != zone_mask_B.shape: artery_process_ = cv2.resize(artery_process_, (zone_mask_B.shape[1], zone_mask_B.shape[0]), interpolation=cv2.INTER_NEAREST)
+                    artery_process_B = artery_process_*zone_mask_B
+                    artery_process_C = artery_process_*zone_mask_C
+                        
+                if artery_skeleton is not None:
+                    if isinstance(artery_skeleton, str) and not os.path.isfile(artery_skeleton): artery_skeleton_ = cv2.imread(artery_vein_path+'artery_binary_skeleton/'+i)[...,0]
+                    else: artery_skeleton_ = artery_skeleton[index]
+                    # remove the intersection of artery_skeleton_
+                    mask_ = np.ones((artery_skeleton_.shape))
+                    for it_x in range(ignored_pixels, mask_.shape[0] - ignored_pixels):
+                        for it_y in range(ignored_pixels, mask_.shape[1] - ignored_pixels):
+                            if artery_skeleton_[it_x, it_y] > 0:
+                                mask,active_neighbours = intersection(mask_,artery_skeleton_, it_x, it_y)
+                    artery_skeleton_ = artery_skeleton_ * mask
+
+                    if artery_skeleton_.shape != zone_mask_B.shape: artery_skeleton_ = cv2.resize(artery_skeleton_, (zone_mask_B.shape[1], zone_mask_B.shape[0]), interpolation=cv2.INTER_NEAREST)
+                    artery_skeleton_B = artery_skeleton_*zone_mask_B
+                    artery_skeleton_C = artery_skeleton_*zone_mask_C
+
+                if vein_process is not None:
+                    if isinstance(vein_process, str) and not os.path.isfile(vein_process): vein_process_ = cv2.imread(artery_vein_path+'vein_binary_process/'+i)[...,0]
+                    else: vein_process_ = vein_process[index]
+                    
+                    if vein_process_.shape != zone_mask_B.shape: vein_process_ = cv2.resize(vein_process_, (zone_mask_B.shape[1], zone_mask_B.shape[0]), interpolation=cv2.INTER_NEAREST)
+                    vein_process_B = vein_process_*zone_mask_B
+                    vein_process_C = vein_process_*zone_mask_C
+
+                if vein_skeleton is not None:
+                    if isinstance(vein_skeleton, str) and not os.path.isfile(vein_skeleton): vein_skeleton_ = cv2.imread(artery_vein_path+'vein_binary_skeleton/'+i)[...,0]
+                    else: vein_skeleton_ = vein_skeleton[index]
+                    # remove the intersection of vein_skeleton_
+                    mask_ = np.ones((vein_skeleton_.shape))
+                    for it_x in range(ignored_pixels, mask_.shape[0] - ignored_pixels):
+                        for it_y in range(ignored_pixels, mask_.shape[1] - ignored_pixels):
+                            if vein_skeleton_[it_x, it_y] > 0:
+                                mask,active_neighbours = intersection(mask_,vein_skeleton_, it_x, it_y)
+                    vein_skeleton_ = vein_skeleton_ * mask
+
+                    if vein_skeleton_.shape != zone_mask_B.shape: vein_skeleton_ = cv2.resize(vein_skeleton_, (zone_mask_B.shape[1], zone_mask_B.shape[0]), interpolation=cv2.INTER_NEAREST)
+                    vein_skeleton_B = vein_skeleton_*zone_mask_B
+                    vein_skeleton_C = vein_skeleton_*zone_mask_C
 
 
                 if (distance_/disc_cup_912.shape[1])<0.1:
@@ -340,43 +348,50 @@ def optic_disc_centre(images, binary_process=None, artery_process=None, vein_pro
                     optic_vertical_CDR.append(cup_vertical_height/disc_vertical_height)
                     optic_horizontal_CDR.append(cup_horizontal_width/disc_horizontal_width)
 
-                    if save:
-                        cv2.imwrite(B_optic_process_binary_vessel_path+i,binary_process_B)
-                        cv2.imwrite(B_optic_process_artery_path+i,artery_process_B)
-                        cv2.imwrite(B_optic_process_vein_path+i,vein_process_B)
-                        cv2.imwrite(B_optic_skeleton_binary_vessel_path+i,binary_skeleton_B)
-                        cv2.imwrite(B_optic_skeleton_artery_path+i,artery_skeleton_B)
-                        cv2.imwrite(B_optic_skeleton_vein_path+i,vein_skeleton_B)
-
-                        cv2.imwrite(C_optic_process_binary_vessel_path+i,binary_process_C)
-                        cv2.imwrite(C_optic_process_artery_path+i,artery_process_C)
-                        cv2.imwrite(C_optic_process_vein_path+i,vein_process_C)
-                        cv2.imwrite(C_optic_skeleton_binary_vessel_path+i,binary_skeleton_C)
-                        cv2.imwrite(C_optic_skeleton_artery_path+i,artery_skeleton_C)
-                        cv2.imwrite(C_optic_skeleton_vein_path+i,vein_skeleton_C)   
-                    
-                        shutil.copy(binary_vessel_path+'binary_process/'+i,disc_process_binary_vessel_path+i)
-                        shutil.copy(artery_vein_path+'artery_binary_process/'+i,disc_process_artery_path+i)
-                        shutil.copy(artery_vein_path+'vein_binary_process/'+i,disc_process_vein_path+i)
-                        shutil.copy(binary_vessel_path+'binary_skeleton/'+i,disc_skeleton_binary_vessel_path+i)
-                        shutil.copy(artery_vein_path+'artery_binary_skeleton/'+i,disc_skeleton_artery_path+i)
-                        shutil.copy(artery_vein_path+'vein_binary_skeleton/'+i,disc_skeleton_vein_path+i)
-                    else:
+                    if save_path is not None:
+                        if binary_process is not None:
+                            cv2.imwrite(B_optic_process_binary_vessel_path+i,binary_process_B)
+                            cv2.imwrite(C_optic_process_binary_vessel_path+i,binary_process_C)
+                            shutil.copy(binary_vessel_path+'binary_process/'+i,disc_process_binary_vessel_path+i)
+                        if binary_skeleton is not None:
+                            cv2.imwrite(B_optic_skeleton_binary_vessel_path+i,binary_skeleton_B)
+                            cv2.imwrite(C_optic_skeleton_binary_vessel_path+i,binary_skeleton_C)
+                            shutil.copy(binary_vessel_path+'binary_skeleton/'+i,disc_skeleton_binary_vessel_path+i)
+                        if artery_process is not None:
+                            cv2.imwrite(B_optic_process_artery_path+i,artery_process_B)
+                            cv2.imwrite(C_optic_process_artery_path+i,artery_process_C)
+                            shutil.copy(artery_vein_path+'artery_binary_process/'+i,disc_process_artery_path+i)
+                        if artery_skeleton is not None:
+                            cv2.imwrite(B_optic_skeleton_artery_path+i,artery_skeleton_B)
+                            cv2.imwrite(C_optic_skeleton_artery_path+i,artery_skeleton_C)
+                            shutil.copy(artery_vein_path+'artery_binary_skeleton/'+i,disc_skeleton_artery_path+i)
+                        if vein_process is not None:
+                            cv2.imwrite(B_optic_process_vein_path+i,vein_process_B)
+                            cv2.imwrite(C_optic_process_vein_path+i,vein_process_C)
+                            shutil.copy(artery_vein_path+'vein_binary_process/'+i,disc_process_vein_path+i)
+                        if vein_skeleton is not None:
+                            cv2.imwrite(B_optic_skeleton_vein_path+i,vein_skeleton_B)
+                            cv2.imwrite(C_optic_skeleton_vein_path+i,vein_skeleton_C)
+                            shutil.copy(artery_vein_path+'vein_binary_skeleton/'+i,disc_skeleton_vein_path+i) 
+                      
+                    if binary_process is not None:
                         binary_process_Bs.append(binary_process_B)
-                        artery_process_Bs.append(artery_process_B)
-                        vein_process_Bs.append(vein_process_B)
-                        binary_skeleton_Bs.append(binary_skeleton_B)
-                        artery_skeleton_Bs.append(artery_skeleton_B)
-                        vein_skeleton_Bs.append(vein_skeleton_B)
-
                         binary_process_Cs.append(binary_process_C)
-                        artery_process_Cs.append(artery_process_C)
-                        vein_process_Cs.append(vein_process_C)
+                    if binary_skeleton is not None:
+                        binary_skeleton_Bs.append(binary_skeleton_B)
                         binary_skeleton_Cs.append(binary_skeleton_C)
+                    if artery_process is not None:
+                        artery_process_Bs.append(artery_process_B)
+                        artery_process_Cs.append(artery_process_C)
+                    if artery_skeleton is not None:
+                        artery_skeleton_Bs.append(artery_skeleton_B)
                         artery_skeleton_Cs.append(artery_skeleton_C)
+                    if vein_process is not None:
+                        vein_process_Bs.append(vein_process_B)
+                        vein_process_Cs.append(vein_process_C)
+                    if vein_skeleton is not None:
+                        vein_skeleton_Bs.append(vein_skeleton_B)
                         vein_skeleton_Cs.append(vein_skeleton_C)
-                    
-
 
                 else:
                     macular_centre_list.append(i)
@@ -386,7 +401,7 @@ def optic_disc_centre(images, binary_process=None, artery_process=None, vein_pro
                     macular_horizontal_cup.append(cup_horizontal_width*resolution_scale)
                     macular_vertical_CDR.append(cup_vertical_height/disc_vertical_height)
                     macular_horizontal_CDR.append(cup_horizontal_width/disc_horizontal_width)
-                    if save:
+                    if save_path is not None:
                         cv2.imwrite(zone_b_macular_process_binary_vessel_path+i,binary_process_B)
                         cv2.imwrite(zone_b_macular_process_artery_path+i,artery_process_B)
                         cv2.imwrite(zone_b_macular_process_vein_path+i,vein_process_B)
@@ -407,24 +422,29 @@ def optic_disc_centre(images, binary_process=None, artery_process=None, vein_pro
                         shutil.copy(binary_vessel_path+'binary_skeleton/'+i,macular_skeleton_binary_vessel_path+i)
                         shutil.copy(artery_vein_path+'artery_binary_skeleton/'+i,macular_skeleton_artery_path+i)
                         shutil.copy(artery_vein_path+'vein_binary_skeleton/'+i,macular_skeleton_vein_path+i)
-                    else:
+                    
+                    if binary_process is not None:
                         binary_process_Bs.append(binary_process_B)
-                        artery_process_Bs.append(artery_process_B)
-                        vein_process_Bs.append(vein_process_B)
-                        binary_skeleton_Bs.append(binary_skeleton_B)
-                        artery_skeleton_Bs.append(artery_skeleton_B)
-                        vein_skeleton_Bs.append(vein_skeleton_B)
-
                         binary_process_Cs.append(binary_process_C)
-                        artery_process_Cs.append(artery_process_C)
-                        vein_process_Cs.append(vein_process_C)
+                    if binary_skeleton is not None:
+                        binary_skeleton_Bs.append(binary_skeleton_B)
                         binary_skeleton_Cs.append(binary_skeleton_C)
+                    if artery_process is not None:
+                        artery_process_Bs.append(artery_process_B)
+                        artery_process_Cs.append(artery_process_C)
+                    if artery_skeleton is not None:
+                        artery_skeleton_Bs.append(artery_skeleton_B)
                         artery_skeleton_Cs.append(artery_skeleton_C)
+                    if vein_process is not None:
+                        vein_process_Bs.append(vein_process_B)
+                        vein_process_Cs.append(vein_process_C)
+                    if vein_skeleton is not None:
+                        vein_skeleton_Bs.append(vein_skeleton_B)
                         vein_skeleton_Cs.append(vein_skeleton_C)
                     
             else:
                 macular_centre_list.append(i)
-                if save:
+                if save_path is not None:
                     shutil.copy(binary_vessel_path+'binary_process/'+i,macular_process_binary_vessel_path+i)
                     shutil.copy(artery_vein_path+'artery_binary_process/'+i,macular_process_artery_path+i)
                     shutil.copy(artery_vein_path+'vein_binary_process/'+i,macular_process_vein_path+i)
@@ -439,9 +459,11 @@ def optic_disc_centre(images, binary_process=None, artery_process=None, vein_pro
                 macular_vertical_CDR.append(-1)
                 macular_horizontal_CDR.append(-1)
                 
-        except:
+        except Exception as e:
+            print(f"Exception: {e}")
+            print("ERROR:", type(e).__name__, str(e))
             macular_centre_list.append(i)
-            if save:
+            if save_path is not None:
                 shutil.copy(binary_vessel_path+'binary_process/'+i,macular_process_binary_vessel_path+i)
                 shutil.copy(artery_vein_path+'artery_binary_process/'+i,macular_process_artery_path+i)
                 shutil.copy(artery_vein_path+'vein_binary_process/'+i,macular_process_vein_path+i)
@@ -459,26 +481,25 @@ def optic_disc_centre(images, binary_process=None, artery_process=None, vein_pro
             
     Pd_optic_centre = pd.DataFrame({'Name':optic_centre_list, 'Disc_height':optic_vertical_disc, 'Disc_width':optic_horizontal_disc, 'Cup_height': optic_vertical_cup, 'Cup_width': optic_horizontal_cup, 'CDR_vertical': optic_vertical_CDR, 'CDR_horizontal': optic_horizontal_CDR})
     Pd_macular_centre = pd.DataFrame({'Name':macular_centre_list, 'Disc_height':macular_vertical_disc, 'Disc_width':macular_horizontal_disc, 'Cup_height': macular_vertical_cup, 'Cup_width': macular_horizontal_cup, 'CDR_vertical': macular_vertical_CDR, 'CDR_horizontal': macular_horizontal_CDR})
-    if save:
+    if save_path is not None:
         Pd_optic_centre.to_csv(optic_binary_result_path + 'Disc_cup_results.csv', index = None, encoding='utf8')
         Pd_macular_centre.to_csv(macular_binary_result_path + 'Disc_cup_results.csv', index = None, encoding='utf8')        
-    else:
-        return {
-            "df_optic_centre": Pd_optic_centre,
-            "df_macular_centre": Pd_macular_centre,
-            "B_binary_process": binary_process_Bs,
-            "B_artery_process": artery_process_Bs,
-            "B_vein_process": vein_process_Bs,
-            "B_binary_skeleton": binary_skeleton_Bs,
-            "B_artery_skeleton": artery_skeleton_Bs,
-            "B_vein_skeleton": vein_skeleton_Bs,
-            "C_binary_process": binary_process_Cs,
-            "C_artery_process": artery_process_Cs,
-            "C_vein_process": vein_process_Cs,
-            "C_binary_skeleton": binary_skeleton_Cs,
-            "C_artery_skeleton": artery_skeleton_Cs,
-            "C_vein_skeleton": vein_skeleton_Cs
-        }
+    return {
+        "df_optic_centre": Pd_optic_centre,
+        "df_macular_centre": Pd_macular_centre,
+        "B_binary_process": binary_process_Bs,
+        "B_artery_process": artery_process_Bs,
+        "B_vein_process": vein_process_Bs,
+        "B_binary_skeleton": binary_skeleton_Bs,
+        "B_artery_skeleton": artery_skeleton_Bs,
+        "B_vein_skeleton": vein_skeleton_Bs,
+        "C_binary_process": binary_process_Cs,
+        "C_artery_process": artery_process_Cs,
+        "C_vein_process": vein_process_Cs,
+        "C_binary_skeleton": binary_skeleton_Cs,
+        "C_artery_skeleton": artery_skeleton_Cs,
+        "C_vein_skeleton": vein_skeleton_Cs
+    }
 
     
 def misc_measures(true_vessel_arr, pred_vessel_arr):
@@ -499,19 +520,20 @@ def misc_measures(true_vessel_arr, pred_vessel_arr):
     
     
         
-def prediction_eval(models, test_loader, device, save):
+def prediction_eval(models, test_loader, device, save_path):
     
     n_val = len(test_loader)
     
-    seg_results_small_path = f'{AUTOMORPH_DATA}/Results/M2/optic_disc_cup/resized/'
-    seg_results_raw_path = f'{AUTOMORPH_DATA}/Results/M2/optic_disc_cup/raw/'
+    if save_path is not None:
+        seg_results_small_path = os.path.join(save_path, 'resized')
+        seg_results_raw_path = os.path.join(save_path, 'raw')
+        seg_uncertainty_small_path = os.path.join(save_path, 'resize_uncertainty')
+        seg_uncertainty_raw_path = os.path.join(save_path, 'raw_uncertainty') 
     
-    if save and not os.path.isdir(seg_results_small_path): os.makedirs(seg_results_small_path)
-    if save and not os.path.isdir(seg_results_raw_path): os.makedirs(seg_results_raw_path)
-    seg_uncertainty_small_path = f'{AUTOMORPH_DATA}/Results/M2/optic_disc_cup/resize_uncertainty/'        
-    if save and not os.path.isdir(seg_uncertainty_small_path): os.makedirs(seg_uncertainty_small_path)
-    seg_uncertainty_raw_path = f'{AUTOMORPH_DATA}/Results/M2/optic_disc_cup/raw_uncertainty/'
-    if save and not os.path.isdir(seg_uncertainty_raw_path): os.makedirs(seg_uncertainty_raw_path)
+        if not os.path.isdir(seg_results_small_path): os.makedirs(seg_results_small_path)
+        if not os.path.isdir(seg_results_raw_path): os.makedirs(seg_results_raw_path)
+        if not os.path.isdir(seg_uncertainty_small_path): os.makedirs(seg_uncertainty_small_path)
+        if not os.path.isdir(seg_uncertainty_raw_path): os.makedirs(seg_uncertainty_raw_path)
     
     cup_resized = []
     cup_raw = []
@@ -553,21 +575,19 @@ def prediction_eval(models, test_loader, device, save):
             
             for i in range(n_img):
                     
-                if save:
-                    save_image(uncertainty_map[i,...]*255, seg_uncertainty_small_path+img_name[i]+'.png')
-                    save_image(uncertainty_map[i,1,...]*255, seg_uncertainty_small_path+img_name[i]+'_disc.png')
-                    save_image(uncertainty_map[i,2,...]*255, seg_uncertainty_small_path+img_name[i]+'_cup.png')
-                else:
-                    uncertainty_resized.append(uncertainty_map[i,...].cpu().numpy())
+                if save_path is not None:
+                    save_image(uncertainty_map[i,...]*255, os.path.join(seg_uncertainty_small_path, img_name[i]+'.png'))
+                    save_image(uncertainty_map[i,1,...]*255, os.path.join(seg_uncertainty_small_path, img_name[i]+'_disc.png'))
+                    save_image(uncertainty_map[i,2,...]*255, os.path.join(seg_uncertainty_small_path, img_name[i]+'_cup.png'))
+                uncertainty_resized.append(uncertainty_map[i,...].cpu().numpy())
 
                 uncertainty_img = Image.fromarray(((uncertainty_map[i,...]*255).cpu().numpy().transpose(1,2,0)).astype(np.uint8))
                 uncertainty_img = uncertainty_img.resize((int(ori_width[i]),int(ori_height[i])))
                 uncertainty_tensor = torchvision.transforms.ToTensor()(uncertainty_img)
 
-                if save:
-                    save_image(uncertainty_tensor, seg_uncertainty_raw_path+img_name[i]+'.png')
-                else:
-                    uncertainty_raw.append(uncertainty_tensor.cpu().numpy())
+                if save_path is not None:
+                    save_image(uncertainty_tensor, os.path.join(seg_uncertainty_raw_path, img_name[i]+'.png'))
+                uncertainty_raw.append(uncertainty_tensor.cpu().numpy())
                     
                 img_r = np.zeros((prediction_decode[i,...].shape[0],prediction_decode[i,...].shape[1]))
                 img_g = np.zeros((prediction_decode[i,...].shape[0],prediction_decode[i,...].shape[1]))
@@ -583,14 +603,13 @@ def prediction_eval(models, test_loader, device, save):
                 img_ = np.concatenate((img_b[...,np.newaxis], img_g[...,np.newaxis], img_r[...,np.newaxis]), axis=2)
                 img_ww = cv2.resize(np.float32(img_)*255, (int(ori_width[i]),int(ori_height[i])), interpolation = cv2.INTER_NEAREST)
 
-                if save:
-                    cv2.imwrite(seg_results_small_path+ img_name[i]+ '.png', np.float32(img_)*255)
-                    cv2.imwrite(seg_results_raw_path+ img_name[i]+ '.png', img_ww)
-                else:
-                    cup_resized.append(np.float32(img_)*255)
-                    cup_raw.append(img_ww)
+                if save_path is not None:
+                    cv2.imwrite(os.path.join(seg_results_small_path, img_name[i]+ '.png'), np.float32(img_)*255)
+                    cv2.imwrite(os.path.join(seg_results_raw_path, img_name[i]+ '.png'), img_ww)
+                cup_resized.append(np.float32(img_)*255)
+                cup_raw.append(img_ww)
                 pbar.update(imgs.shape[0])
-    if not save: return cup_resized, cup_raw, uncertainty_resized, uncertainty_raw
+    return cup_resized, cup_raw, uncertainty_resized, uncertainty_raw
                 
                 
 

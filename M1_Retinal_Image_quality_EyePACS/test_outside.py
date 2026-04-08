@@ -13,15 +13,13 @@ from .dataset import BasicDataset_OUT
 from torch.utils.data import DataLoader
 from .model import Resnet101_fl, InceptionV3_fl, Densenet161_fl, Resnext101_32x8d_fl, MobilenetV2_fl, Vgg16_bn_fl, Efficientnet_fl
 
-AUTOMORPH_DATA = os.getenv('AUTOMORPH_DATA','..')
-
 def test_net(models,
             imgs,
             device,
             batch_size=20,
             image_size=(512,512),
             num_workers=0,
-            save = False,
+            save_path = None,
             task='Retinal_quality',
             load='EyePACS_quality',
             model='efficientnet',
@@ -35,7 +33,9 @@ def test_net(models,
 
     if not os.path.isdir(storage_path):
         os.makedirs(storage_path)
-    
+
+    if isinstance(imgs, str) and os.path.isfile(imgs):
+        imgs = [imgs]
     dataset = BasicDataset_OUT(imgs, image_size, n_classes)
         
     n_test = len(dataset)
@@ -80,13 +80,9 @@ def test_net(models,
 
     Data4stage2 = pd.DataFrame({'Name':filename_list, 'softmax_good':np.array(prediction_list_mean)[:,0],'softmax_usable':np.array(prediction_list_mean)[:,1],'softmax_bad':np.array(prediction_list_mean)[:,2], 'good_sd':np.array(prediction_list_std)[:,0],'usable_sd':np.array(prediction_list_std)[:,1],'bad_sd':np.array(prediction_list_std)[:,2], 'Prediction': prediction_decode_list})
 
-    if save:
-        if not os.path.exists(f'{AUTOMORPH_DATA}/Results/M1'):
-            os.makedirs(f'{AUTOMORPH_DATA}/Results/M1')
-        Data4stage2.to_csv(f'{AUTOMORPH_DATA}/Results/M1/results_ensemble.csv', index = None, encoding='utf8')
-        return None
-    else:
-        return Data4stage2
+    if save_path is not None:
+        Data4stage2.to_csv(save_path, index = None, encoding='utf8')
+    return Data4stage2
 
 
 

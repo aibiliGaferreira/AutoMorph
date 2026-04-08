@@ -88,9 +88,12 @@ class TestDataset(Dataset):
         elif isinstance(imgs, list) and all(isinstance(i, str) for i in imgs): # List of file paths
             self.ids = imgs
             self.im_list = [Image.open(file) for file in imgs]
+        elif isinstance(imgs, np.ndarray) and imgs.ndim == 3: # Single memory image array
+            self.ids = ['0']
+            self.im_list = [Image.fromarray(imgs)]
         else: # List of images
             self.ids = list(map(str, range(len(imgs))))
-            self.imgs = [Image.fromarray(img) if isinstance(img, np.ndarray) else img for img in imgs]
+            self.im_list = [Image.fromarray(img) if isinstance(img, np.ndarray) else img for img in imgs]
 
         logging.info(f'Creating dataset with {len(self.ids)} examples')
 
@@ -104,22 +107,10 @@ class TestDataset(Dataset):
         return im_crop, [minr, minc, maxr, maxc]
 
     def __getitem__(self, index):
-        # # load image and mask
         idx = self.ids[index]
-
-        img = self.imgs[index]
+        img = self.im_list[index]
         
-        #mask = Image.open(self.mask_list[index]).convert('L')
-        #img, coords_crop = self.crop_to_fov(img, mask)
         original_sz = img.size[0], img.size[1]  # in numpy convention
-
-        # # load image and mask
-        # img = Image.open(self.im_list[index])
-        # original_sz = img.size[1], img.size[0]  # in numpy convention
-        # mask = Image.open(self.mask_list[index]).convert('L')
-        # img, coords_crop = self.crop_to_fov(img, mask)
-        # print(self.im_list[index], 'original size inside dataset', original_sz)
-
         rsz = p_tr.Resize(self.tg_size)
         tnsr = p_tr.ToTensor()
         tr = p_tr.Compose([rsz, tnsr])
@@ -217,6 +208,8 @@ def get_train_val_loaders(csv_path_train, csv_path_val, seed_num, batch_size=4, 
 def get_test_dataset(data_path, tg_size=(512, 512)):
     # csv_path will only not be test.csv when we want to build training set predictions
     #path_test_csv = osp.join(data_path, csv_path)
+    if isinstance(data_path, str) and os.path.isfile(data_path):
+            data_path = [data_path]
     path_test_csv = data_path
     test_dataset = TestDataset(imgs=path_test_csv, tg_size=tg_size)
     test_loader = DataLoader(dataset=test_dataset, batch_size=16, num_workers=0, pin_memory=False)

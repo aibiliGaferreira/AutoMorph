@@ -3,23 +3,20 @@ import pandas as pd
 import shutil
 import os
 
-AUTOMORPH_DATA = os.getenv('AUTOMORPH_DATA','..')
-
-def merge_quality_assessment(df=f'{AUTOMORPH_DATA}/Results/M1/results_ensemble.csv', save:bool=False):
+def merge_quality_assessment(df='results_ensemble.csv', save_path=None):
 
     if isinstance(df, str):
         df = pd.read_csv(df)
 
-    if save:
-        if not os.path.exists(f'{AUTOMORPH_DATA}/Results/M1/Good_quality/'):
-            os.makedirs(f'{AUTOMORPH_DATA}/Results/M1/Good_quality/')
-        if not os.path.exists(f'{AUTOMORPH_DATA}/Results/M1/Bad_quality/'):
-            os.makedirs(f'{AUTOMORPH_DATA}/Results/M1/Bad_quality/')
-    else:
-        img_quality = {
-            "good": [],
-            "bad": []
-        }
+    if save_path:
+        if not os.path.exists(os.path.join(save_path, 'Good_quality/')):
+            os.makedirs(os.path.join(save_path, 'Good_quality/'))
+        if not os.path.exists(os.path.join(save_path, 'Bad_quality/')):
+            os.makedirs(os.path.join(save_path, 'Bad_quality/'))
+    img_quality = {
+        "good": [],
+        "bad": []
+    }
 
     Eyepacs_pre = df['Prediction']
     Eyepacs_bad_mean = df['softmax_bad']
@@ -32,24 +29,21 @@ def merge_quality_assessment(df=f'{AUTOMORPH_DATA}/Results/M1/results_ensemble.c
     for i in range(len(name_list)):
         if Eyepacs_pre[i]==0:
             Eye_good+=1
-            if save: 
-                shutil.copy(name_list[i], f'{AUTOMORPH_DATA}/Results/M1/Good_quality/')
-            else:
-                img_quality["good"].append(name_list[i]) # TODO: Do we want to return the name or the image
+            if save_path: 
+                shutil.copy(name_list[i], os.path.join(save_path, 'Good_quality/'))
+            img_quality["good"].append(name_list[i]) # TODO: Do we want to return the name or the image
 
         elif (Eyepacs_pre[i]==1) and (Eyepacs_bad_mean[i]<0.25):
             Eye_good+=1
-            if save:
-                shutil.copy(name_list[i], f'{AUTOMORPH_DATA}/Results/M1/Good_quality/')
-            else:
-                img_quality["good"].append(name_list[i])
+            if save_path:
+                shutil.copy(name_list[i], os.path.join(save_path, 'Good_quality/'))
+            img_quality["good"].append(name_list[i])
         else:
             Eye_bad+=1
-            if save:
-                shutil.copy(name_list[i], f'{AUTOMORPH_DATA}/Results/M1/Bad_quality/')
-            else:
-                img_quality["bad"].append(name_list[i])
+            if save_path:
+                shutil.copy(name_list[i], os.path.join(save_path, 'Bad_quality/'))
+            img_quality["bad"].append(name_list[i])
 
-    print('Gradable cases by EyePACS_QA is {} '.format(Eye_good))
-    print('Ungradable cases by EyePACS_QA is {} '.format(Eye_bad))
-    if not save: return img_quality
+    #print('Gradable cases by EyePACS_QA is {} '.format(Eye_good))
+    #print('Ungradable cases by EyePACS_QA is {} '.format(Eye_bad))
+    return img_quality

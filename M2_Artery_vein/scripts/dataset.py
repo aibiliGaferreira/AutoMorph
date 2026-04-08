@@ -1,3 +1,4 @@
+import os
 from os.path import splitext
 from os import listdir
 import numpy as np
@@ -157,6 +158,9 @@ class LearningAVSegData(Dataset):
 class LearningAVSegData_OOD(Dataset):
     def __init__(self, imgs, img_size):
         self.img_size = img_size
+
+        if isinstance(imgs, str) and os.path.isfile(imgs):
+            imgs = [imgs]
         
         if isinstance(imgs, str): # Directory path
             files = [file for file in listdir(imgs) if not file.startswith('.')]
@@ -165,6 +169,9 @@ class LearningAVSegData_OOD(Dataset):
         elif isinstance(imgs, list) and all(isinstance(i, str) for i in imgs): # List of file paths
             self.ids = imgs
             self.imgs = [Image.open(file) for file in imgs]
+        elif isinstance(imgs, np.ndarray) and imgs.ndim == 3: # Single memory image
+            self.ids = ["0"]
+            self.imgs = [Image.fromarray(imgs)]
         else: # List of images
             self.ids = list(map(str, range(len(imgs))))
             self.imgs = [Image.fromarray(img) if isinstance(img, np.ndarray) else img for img in imgs]

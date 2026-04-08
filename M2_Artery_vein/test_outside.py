@@ -112,23 +112,20 @@ def filter_frag(images):
 
 
 
-def test_net(models, loader, device, save=False):
+def test_net(models, loader, device, save_path=None):
     
     n_val = len(loader)
     
-    seg_results_small_path = f'{AUTOMORPH_DATA}/Results/M2/artery_vein/resized/'
-    seg_results_raw_path = f'{AUTOMORPH_DATA}/Results/M2/artery_vein/raw/'
+    if save_path is not None:
+        seg_results_small_path = os.path.join(save_path, 'resized/')
+        seg_results_raw_path = os.path.join(save_path, 'raw/')
+        seg_uncertainty_small_path = os.path.join(save_path, 'resize_uncertainty/')
+        seg_uncertainty_raw_path = os.path.join(save_path, 'raw_uncertainty/')
     
-    if save and not os.path.isdir(seg_results_small_path):
-        os.makedirs(seg_results_small_path)
-    if save and not os.path.isdir(seg_results_raw_path):
-        os.makedirs(seg_results_raw_path)
-    seg_uncertainty_small_path = f'{AUTOMORPH_DATA}/Results/M2/artery_vein/resize_uncertainty/'        
-    if save and not os.path.isdir(seg_uncertainty_small_path):
-        os.makedirs(seg_uncertainty_small_path)
-    seg_uncertainty_raw_path = f'{AUTOMORPH_DATA}/Results/M2/artery_vein/raw_uncertainty/'
-    if save and not os.path.isdir(seg_uncertainty_raw_path):
-        os.makedirs(seg_uncertainty_raw_path)
+        if not os.path.isdir(seg_results_small_path): os.makedirs(seg_results_small_path)
+        if not os.path.isdir(seg_results_raw_path): os.makedirs(seg_results_raw_path)
+        if not os.path.isdir(seg_uncertainty_small_path): os.makedirs(seg_uncertainty_small_path)
+        if not os.path.isdir(seg_uncertainty_raw_path): os.makedirs(seg_uncertainty_raw_path)
         
     av_resized = []
     av_raw = []
@@ -176,21 +173,19 @@ def test_net(models, loader, device, save=False):
                 
             for i in range(n_img):
                 
-                if save:
-                    save_image(uncertainty_map[i,...]*255, seg_uncertainty_small_path+img_name[i]+'.png')
-                    save_image(uncertainty_map[i,1,...]*255, seg_uncertainty_small_path+img_name[i]+'_artery.png')
-                    save_image(uncertainty_map[i,2,...]*255, seg_uncertainty_small_path+img_name[i]+'_vein.png')
-                else:
-                    uncertainty_resized.append(uncertainty_map[i,...].cpu().numpy())
+                if save_path is not None:
+                    save_image(uncertainty_map[i,...]*255, seg_uncertainty_small_path+os.path.basename(img_name[i]))
+                    save_image(uncertainty_map[i,1,...]*255, seg_uncertainty_small_path+os.path.basename(img_name[i]))
+                    save_image(uncertainty_map[i,2,...]*255, seg_uncertainty_small_path+os.path.basename(img_name[i]))
+                uncertainty_resized.append(uncertainty_map[i,...].cpu().numpy())
 
                 uncertainty_img = Image.fromarray((uncertainty_map[i,1,...]*255).cpu().numpy())
                 uncertainty_img = uncertainty_img.resize((int(ori_width[i]),int(ori_height[i])))
                 uncertainty_tensor = torchvision.transforms.ToTensor()(uncertainty_img)
                 
-                if save:
-                    save_image(uncertainty_tensor, seg_uncertainty_raw_path+img_name[i]+'.png')
-                else:
-                    uncertainty_raw.append(uncertainty_tensor.cpu().numpy())
+                if save_path is not None:
+                    save_image(uncertainty_tensor, seg_uncertainty_raw_path+os.path.basename(img_name[i]))
+                uncertainty_raw.append(uncertainty_tensor.cpu().numpy())
                 
                 
                 img_r = np.zeros((prediction_decode[i,...].shape[0],prediction_decode[i,...].shape[1]))
@@ -207,15 +202,14 @@ def test_net(models, loader, device, save=False):
                 img_ = np.concatenate((img_b[...,np.newaxis], img_g[...,np.newaxis], img_r[...,np.newaxis]), axis=2)
                 img_ww = cv2.resize(np.float32(img_)*255, (int(ori_width[i]),int(ori_height[i])), interpolation = cv2.INTER_NEAREST)
                 
-                if save:
-                    cv2.imwrite(seg_results_small_path+ img_name[i]+ '.png', np.float32(img_)*255)
-                    cv2.imwrite(seg_results_raw_path+ img_name[i]+ '.png', img_ww)
-                else:
-                    av_resized.append(np.float32(img_)*255)
-                    av_raw.append(img_ww)
+                if save_path is not None:
+                    cv2.imwrite(seg_results_small_path+ os.path.basename(img_name[i]), np.float32(img_)*255)
+                    cv2.imwrite(seg_results_raw_path+ os.path.basename(img_name[i]), img_ww)
+                av_resized.append(np.float32(img_)*255)
+                av_raw.append(img_ww)
                 
             pbar.update(imgs.shape[0])
-    if not save: return av_resized, av_raw, uncertainty_resized, uncertainty_raw
+    return av_resized, av_raw, uncertainty_resized, uncertainty_raw
 
 
 
