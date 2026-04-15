@@ -213,7 +213,7 @@ def optic_disc_centre(images, binary_process=None, artery_process=None, vein_pro
             disc_ = disc_cup_912[...,2]
             cup_ = disc_cup_912[...,0]
             ## judgement the optic disc/cup segmentation
-            print(disc_.shape)
+            
             disc_mask = measure.label(disc_)
             regions = measure.regionprops(disc_mask)
             regions.sort(key=lambda x: x.area, reverse=True)
