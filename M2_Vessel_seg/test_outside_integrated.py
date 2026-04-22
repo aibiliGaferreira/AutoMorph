@@ -143,10 +143,11 @@ def segment_fundus(data_path, nets, loader, device):
                 mask_pred_img_small = torch.unsqueeze(mask_pred_sigmoid[i,...], 0)
                 if data_path is not None: save_image(mask_pred_img_small, seg_results_small_path+os.path.basename(n_img_name))
                 else: mask_pred_small_list.append(mask_pred_img_small.cpu().numpy())
-                mask_pred_img = Image.fromarray(mask_pred_img_small.squeeze().cpu().numpy()).resize((n_ori_width,n_ori_height)).convert('L') 
+                mask_pred_img = Image.fromarray(mask_pred_img_small.squeeze().cpu().numpy() * 255).resize((n_ori_width,n_ori_height)).convert('L') 
                 mask_pred_tensor = torchvision.transforms.ToTensor()(mask_pred_img)
                 if data_path is not None: save_image(mask_pred_tensor, seg_results_raw_path+os.path.basename(n_img_name))
-                else: mask_pred_list.append(mask_pred_tensor.cpu().numpy())
+                else: mask_pred_list.append(mask_pred_tensor)
+                #else: mask_pred_list.append(mask_pred_tensor.cpu().numpy())
 
                 # Binary
                 mask_pred_resize_bin=torch.zeros(mask_pred_img_small.shape)
@@ -154,7 +155,7 @@ def segment_fundus(data_path, nets, loader, device):
                 if data_path is not None: save_image(mask_pred_resize_bin, seg_results_small_binary_path+os.path.basename(n_img_name))
                 else: mask_bin_small_list.append(mask_pred_resize_bin.cpu().numpy())
                 mask_pred_numpy_bin=torch.zeros(mask_pred_tensor.shape)
-                mask_pred_numpy_bin[mask_pred_tensor>=0.5]=1
+                mask_pred_numpy_bin[(mask_pred_tensor) >=0.5]=1
                 if data_path is not None: save_image(mask_pred_numpy_bin, seg_results_raw_binary_path+os.path.basename(n_img_name))
                 else: mask_bin_list.append(mask_pred_numpy_bin.cpu().numpy())
 
