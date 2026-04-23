@@ -19,6 +19,9 @@ def process(images, save_path, resolution_list = None):
 
     if isinstance(images, str) and os.path.isfile(images):
         images = [images]
+
+    if hasattr(images, "ndim") and images.ndim == 3:
+        images = [images]
     
     if resolution_list is None:
         if os.path.exists(f'{AUTOMORPH_DATA}/resolution_information.csv'):
