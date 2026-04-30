@@ -31,7 +31,6 @@ def filter_frag(images):
 
     
     FD_cal=[]
-    name_list=[]
     VD_cal=[]
     width_cal=[]
 
@@ -63,7 +62,6 @@ def filter_frag(images):
         VD = vessel_density(img2)
         width = np.sum(img2)/np.sum(skeleton)
         FD_cal.append(FD_boxcounting)
-        name_list.append(i)
         VD_cal.append(VD)
         width_cal.append(width)
     
@@ -78,7 +76,7 @@ def filter_frag(images):
 
 def segment_fundus(data_path, nets, loader, device):
     n_val = len(loader) 
-    i = 0
+    name_list=[]
     
     if data_path is not None:
         seg_results_small_path = os.path.join(data_path, "M2", 'resize/')
@@ -127,6 +125,7 @@ def segment_fundus(data_path, nets, loader, device):
             
             for i in range(n_image):    
                 n_img_name = img_name[i]
+                name_list.append(os.path.basename(n_img_name) if isinstance(n_img_name, str) else n_img_name)
                 n_ori_width = ori_width[i]
                 n_ori_height = ori_height[i]
 
@@ -167,14 +166,14 @@ def segment_fundus(data_path, nets, loader, device):
         "mask_pred_small_list": mask_pred_small_list,
         "mask_pred_list": mask_pred_list,
         "mask_bin_small_list": mask_bin_small_list,
-        "mask_bin_list": mask_bin_list
+        "mask_bin_list": mask_bin_list,
+        "name_list": name_list
     }
 
 
 def test_net(imgs, batch_size=8, device="cpu", dataset_train="ALL-SIX", image_size=(912,912), job_name="20210630_uniform_thres40_ALL-SIX", threshold=40, save_path=None):
     
     FD_list = []
-    Name_list = []
     VD_list = []
     if isinstance(imgs, str) and os.path.isfile(imgs):
         imgs = [imgs]
@@ -203,7 +202,7 @@ def test_net(imgs, batch_size=8, device="cpu", dataset_train="ALL-SIX", image_si
     return {
         "images": images,
         "FD_list": analysis["FD_cal"],
-        "Name_list": Name_list,
+        "Name_list": images["name_list"],
         "VD_list": analysis["VD_cal"],
         "width_cal": analysis["width_cal"]
     }

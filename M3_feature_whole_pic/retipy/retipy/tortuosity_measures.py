@@ -18,9 +18,9 @@
 
 import math
 import numpy as np
-from function_ import fractal_dimension, smoothing
-from retipy import math as m
-from retipy.retina import Retina, Window, detect_vessel_border
+from ..function_ import fractal_dimension, smoothing
+from . import math as m
+from .retina import Retina, Window, detect_vessel_border
 from scipy.interpolate import CubicSpline
 from PIL import Image
 import time
@@ -330,7 +330,7 @@ def squared_curvature_tortuosity(x, y):
         y_1 = m.derivative1_centered_h1(i, y)
         y_2 = m.derivative2_centered_h1(i, y)
         curvatures.append((x_1*y_2 - x_2*y_1)/(y_1**2 + x_1**2)**1.5)
-    return abs(np.trapz(curvatures, x_values))
+    return abs(np.trapezoid(curvatures, x_values))
 
 
 def smooth_tortuosity_cubic(x, y):
@@ -437,8 +437,10 @@ def evaluate_window(window: Window, min_pixels_per_vessel=10, sampling_size=6, r
         
         vessel_total_count = np.sum(bw_window==1)
         pixel_total_count = bw_window.shape[0]*bw_window.shape[1]
+        if isinstance(store_path, str): store_path = store_path + window.filename
+        else: store_path = store_path[int(window.filename)]
         
-        retina = Retina(bw_window, "window{}" + window.filename,store_path=store_path+window.filename)
+        retina = Retina(bw_window, "window{}" + window.filename,store_path=store_path, resolution=window.resolution_list, index=window.index)
         vessel_map = retina.vessel_image
         
         FD_binary,VD_binary,Average_width = global_cal(retina)

@@ -20,7 +20,7 @@ tortuosity_measures
 """
 
 import numpy as np
-from retipy import retina, tortuosity_measures
+from .retipy import retina, tortuosity_measures
 
 
 def _tortuosity_window(x1: int, y1: int, x2: int, y2: int, notes: str):

@@ -18,7 +18,7 @@
 
 import numpy as np
 import cv2
-from retipy import retina
+from . import retina
 
 
 def potential_landmarks(skeleton_img: np.ndarray, kernel: int):

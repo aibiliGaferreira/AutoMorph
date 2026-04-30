@@ -31,7 +31,7 @@ import shutil
 import pandas as pd
 # import scipy.stats as stats
 
-from retipy import configuration, retina, tortuosity_measures
+from .retipy import configuration, retina, tortuosity_measures
 
 AUTOMORPH_DATA = os.getenv('AUTOMORPH_DATA','../..')
 

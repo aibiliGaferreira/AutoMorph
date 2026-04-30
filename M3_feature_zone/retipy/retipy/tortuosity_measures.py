@@ -18,9 +18,9 @@
 
 import math
 import numpy as np
-from function_ import fractal_dimension, smoothing
-from retipy import math as m
-from retipy.retina import Retina, Window, detect_vessel_border
+from ..function_ import fractal_dimension, smoothing
+from . import math as m
+from .retina import Retina, Window, detect_vessel_border
 from scipy.interpolate import CubicSpline
 from PIL import Image
 import time
@@ -329,7 +329,8 @@ def squared_curvature_tortuosity(x, y):
         y_1 = m.derivative1_centered_h1(i, y)
         y_2 = m.derivative2_centered_h1(i, y)
         curvatures.append((x_1*y_2 - x_2*y_1)/(y_1**2 + x_1**2)**1.5)
-    return abs(np.trapz(curvatures, x_values))
+
+    return abs(np.trapezoid(curvatures, x_values))
 
 
 def smooth_tortuosity_cubic(x, y):
@@ -415,7 +416,7 @@ def width_measurement(x, y, retinal):
 
 
 
-def evaluate_window(window: Window, min_pixels_per_vessel=10, sampling_size=6, r2_threshold=0.80, store_path='/home/jupyter/Deep_rias/Results/M2/artery_vein/vein_binary_process'):  # pragma: no cover
+def evaluate_window(window: Window, min_pixels_per_vessel=10, sampling_size=6, r2_threshold=0.80, store_path='/home/jupyter/Deep_rias/Results/M2/artery_vein/vein_binary_process', vessel_type="vessel"):  # pragma: no cover
     """
     Evaluates a Window object and sets the tortuosity values in the tag parameter.
     :param window: The window object to be evaluated
@@ -441,8 +442,11 @@ def evaluate_window(window: Window, min_pixels_per_vessel=10, sampling_size=6, r
         
         vessel_total_count = np.sum(bw_window==1)
         pixel_total_count = bw_window.shape[0]*bw_window.shape[1]
+        if isinstance(store_path, str): store_path = store_path + window.filename
+        else: store_path = store_path[int(window.filename)]
+
         
-        retina = Retina(bw_window, "window{}" + window.filename,store_path=store_path+window.filename)
+        retina = Retina(bw_window, "window{}" + window.filename,store_path=store_path, resolution=window.resolution_list, index=window.index)
         
         FD_binary,VD_binary,Average_width = global_cal(retina)
         
@@ -503,7 +507,7 @@ def evaluate_window(window: Window, min_pixels_per_vessel=10, sampling_size=6, r
     # window.tags = tags
     # calculate the CRAE/CRVE in Hubbard_cal
     
-    try:
+    #try:
 
         sorted_w1_list_average = sorted(w1_list_average)[-6:]
 
@@ -520,17 +524,20 @@ def evaluate_window(window: Window, min_pixels_per_vessel=10, sampling_size=6, r
         #print('CRAE_first_round', CRAE_first_round)
         #print('CRVE_first_round', CRVE_first_round)
 
-        if 'artery' in store_path.split('/')[-2]: 
+        if (vessel_type == "artery") or (isinstance(store_path, str) and 'artery' in store_path.split('/')[-2]): 
             w_second_artery_Hubbard_1, w_second_vein_Hubbard_1 = Hubbard_cal(CRAE_first_round[0],CRAE_first_round[2])  
 
             CRAE_second_round = sorted([w_second_artery_Hubbard_1,CRAE_first_round[1]])
             CRAE_Hubbard,CRVE_Hubbard = Hubbard_cal(CRAE_second_round[0],CRAE_second_round[1])
 
-        else:
+        elif (vessel_type == "vein") or (isinstance(store_path, str) and 'vein' in store_path.split('/')[-2]):
             w_second_artery_Hubbard_1, w_second_vein_Hubbard_1 = Hubbard_cal(CRVE_first_round[0],CRVE_first_round[2])  
 
             CRVE_second_round = sorted([w_second_vein_Hubbard_1,CRVE_first_round[1]])
             CRAE_Hubbard,CRVE_Hubbard = Hubbard_cal(CRVE_second_round[0],CRVE_second_round[1])
+
+        else:
+            CRAE_Hubbard, CRVE_Hubbard,CRAE_Knudtson,CRVE_Knudtson = -1, -1, -1, -1
 
 
         # calculate the CRAE/CRVE in Knudtson
@@ -545,20 +552,23 @@ def evaluate_window(window: Window, min_pixels_per_vessel=10, sampling_size=6, r
         CRAE_first_round = sorted([w_first_artery_Knudtson_1,w_first_artery_Knudtson_2,w_first_artery_Knudtson_3])
         CRVE_first_round = sorted([w_first_vein_Knudtson_1,w_first_vein_Knudtson_2,w_first_vein_Knudtson_3])
 
-        if 'artery' in store_path.split('/')[-2]: 
+        if (vessel_type == "artery") or (isinstance(store_path, str) and 'artery' in store_path.split('/')[-2]): 
             w_second_artery_Knudtson_1, w_second_vein_Knudtson_1 = Knudtson_cal(CRAE_first_round[0],CRAE_first_round[2])  
 
             CRAE_second_round = sorted([w_second_artery_Knudtson_1,CRAE_first_round[1]])
             CRAE_Knudtson,CRVE_Knudtson = Knudtson_cal(CRAE_second_round[0],CRAE_second_round[1])
 
-        else:
+        elif (vessel_type == "vein") or (isinstance(store_path, str) and 'vein' in store_path.split('/')[-2]):
             w_second_artery_Knudtson_1, w_second_vein_Knudtson_1 = Knudtson_cal(CRVE_first_round[0],CRVE_first_round[2])  
 
             CRVE_second_round = sorted([w_second_vein_Knudtson_1,CRVE_first_round[1]])
             CRAE_Knudtson,CRVE_Knudtson = Knudtson_cal(CRVE_second_round[0],CRVE_second_round[1])
 
+        else:
+            CRAE_Knudtson, CRVE_Knudtson = -1, -1
 
-    except:
-        CRAE_Hubbard, CRVE_Hubbard,CRAE_Knudtson,CRVE_Knudtson = -1, -1, -1, -1
+
+    #except:
+    #    CRAE_Hubbard, CRVE_Hubbard,CRAE_Knudtson,CRVE_Knudtson = -1, -1, -1, -1
     
     return FD_binary,VD_binary,Average_width,t2, t4, td, vessel_count_list, w1_list, w1_list_average, CRAE_Hubbard, CRVE_Hubbard,CRAE_Knudtson,CRVE_Knudtson

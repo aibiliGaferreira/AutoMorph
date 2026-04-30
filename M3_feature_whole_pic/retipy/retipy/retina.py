@@ -22,7 +22,7 @@ import numpy as np
 import warnings
 from copy import copy
 from io import BytesIO
-from function_ import thinning
+from ..function_ import thinning
 from matplotlib import pyplot as plt
 from os import path
 from PIL import Image
@@ -42,7 +42,10 @@ class Retina(object):
     """
     @staticmethod
     def _open_image(img_path):
-        return cv2.resize(io.imread(img_path), dsize=(912, 912), interpolation=cv2.INTER_CUBIC)
+        if isinstance(img_path, str):
+            return cv2.resize(io.imread(img_path), dsize=(912, 912), interpolation=cv2.INTER_CUBIC)
+        else:
+            return img_path
 
     @staticmethod
     def get_base64_image(image: np.ndarray, is_luminance: bool = True):
@@ -54,17 +57,25 @@ class Retina(object):
         temp_image.save(buffer, format="png")
         return str(base64.b64encode(buffer.getvalue()).decode('utf-8'))
 
-    def __init__(self, image: np.ndarray, image_path: str, store_path:str):
-        #print('!!!',image_path)
-        #print('@@@@',store_path)
-        
+    def __init__(self, image: np.ndarray, image_path: str, store_path, index:int, resolution):
+        self.index = index
+        self.resolution_list = resolution
+
         if image is None:
             self.np_image = self._open_image(image_path)
-            self.segmentation_path = store_path+image_path.split('_skeleton')[1]
-            self.vessel_image = self._open_image(self.segmentation_path)
+            if isinstance(store_path, str):
+                self.segmentation_path = store_path+image_path.split('_skeleton')[1]
+                self.vessel_image = self._open_image(self.segmentation_path)
+            else:
+                self.vessel_image = store_path[index]
+                self.segmentation_path = None
             
-            _, file = path.split(image_path)
-            self._file_name = file
+            if isinstance(image_path, str):
+                _, file = path.split(image_path)
+                self._file_name = file
+            else:
+                self._file_name = str(index)
+                
         else:
             self.np_image = image
             self._file_name = image_path
@@ -73,17 +84,27 @@ class Retina(object):
             self.vessel_image = self._open_image(self.segmentation_path)
             
         
-        if '/' in image_path:
+        if isinstance(image_path, str) and '/' in image_path:
             img_name = image_path.split('_skeleton/')[1]
-        elif 'window' in image_path:
+        elif isinstance(image_path, str) and 'window' in image_path:
             img_name = image_path.split('window{}')[1]
-        else:
+        elif isinstance(image_path, str):
             img_name = image_path
+        else:
+            img_name = str(index)
+
+        if isinstance(resolution, str):
+            #resolution_list = pd.read_csv(store_path.split('M2')[0]+'M0/crop_info.csv')
+            resolution_list = pd.read_csv(resolution)
+        else:
+            resolution_list = resolution
         
-        resolution_list = pd.read_csv(store_path.split('M2')[0]+'M0/crop_info.csv')
-        
-        self.resolution = resolution_list['Scale_resolution'][resolution_list['Name']==img_name].values[0]
-        
+        matches = resolution_list['Scale_resolution'][resolution_list['Name']==img_name]
+        if matches.empty:
+            self.resolution = resolution_list['Scale_resolution'].iloc[int(img_name)]
+        else:
+            self.resolution = matches.values[0]
+
         # average value
         #self.resolution = 0.83
         
@@ -268,7 +289,9 @@ class Window(Retina):
         super(Window, self).__init__(
             image.np_image,
             image.filename,
-            image.segmentation_path)
+            image.segmentation_path,
+            image.index,
+            image.resolution_list)
         self.windows, self.w_pos = Window.create_windows(image, dimension, method, min_pixels)
         if len(self.windows) == 0:
             raise ValueError("No windows were created for the given retinal image")

@@ -23,7 +23,7 @@ import argparse
 import json
 import numpy as np
 from PIL import Image
-from retipy import tortuosity
+from .retipy import tortuosity
 
 
 parser = argparse.ArgumentParser()

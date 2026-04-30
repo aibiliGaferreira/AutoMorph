@@ -4,8 +4,8 @@ import h5py
 import glob
 import os
 from keras.models import model_from_json
-from retipy import retina
-from retipy import landmarks as l
+from .retipy import retina
+from .retipy import landmarks as l
 
 """Module with operations related to classify vessels into arteries and veins."""
 

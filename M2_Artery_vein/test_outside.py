@@ -89,26 +89,25 @@ def filter_frag(images):
         width_b = np.sum(img_b)/np.sum(skeleton_b)
         
         FD_cal_r.append(FD_boxcounting_r)
-        name_list.append(i)
+        name_list.append(os.path.basename(i) if isinstance(i, str) else i)
         VD_cal_r.append(VD_r)
         FD_cal_b.append(FD_boxcounting_b)
         VD_cal_b.append(VD_b)
         width_cal_r.append(width_r)
         width_cal_b.append(width_b)
     
-        return {
-            "FD_cal_r": FD_cal_r,
-            "images": name_list,
-            "VD_cal_r": VD_cal_r,
-            "FD_cal_b": FD_cal_b,
-            "VD_cal_b": VD_cal_b,
-            "width_cal_r": width_cal_r,
-            "width_cal_b": width_cal_b,
-            "img_r": img_r_list,
-            "img_b": img_b_list,
-            "skeleton_r": img_skeleton_r_list,
-            "skeleton_b": img_skeleton_b_list
-        }
+    return {
+        "FD_cal_r": FD_cal_r,
+        "VD_cal_r": VD_cal_r,
+        "FD_cal_b": FD_cal_b,
+        "VD_cal_b": VD_cal_b,
+        "width_cal_r": width_cal_r,
+        "width_cal_b": width_cal_b,
+        "img_r": img_r_list,
+        "img_b": img_b_list,
+        "skeleton_r": img_skeleton_r_list,
+        "skeleton_b": img_skeleton_b_list
+    }
 
 
 
@@ -131,6 +130,7 @@ def test_net(models, loader, device, save_path=None):
     av_raw = []
     uncertainty_resized = []
     uncertainty_raw = []
+    name_list = []
 
     with tqdm(total=n_val, desc='Validation round', unit='batch', leave=False) as pbar:
         for batch in loader:
@@ -172,7 +172,7 @@ def test_net(models, loader, device, save_path=None):
             n_img = prediction_decode.shape[0]
                 
             for i in range(n_img):
-                
+                name_list.append(os.path.basename(img_name[i]) if isinstance(img_name[i], str) else img_name[i])
                 if save_path is not None:
                     save_image(uncertainty_map[i,...]*255, seg_uncertainty_small_path+os.path.basename(img_name[i]))
                     save_image(uncertainty_map[i,1,...]*255, seg_uncertainty_small_path+os.path.basename(img_name[i]))
@@ -209,7 +209,7 @@ def test_net(models, loader, device, save_path=None):
                 av_raw.append(img_ww)
                 
             pbar.update(imgs.shape[0])
-    return av_resized, av_raw, uncertainty_resized, uncertainty_raw
+    return av_resized, av_raw, uncertainty_resized, uncertainty_raw, name_list
 
 
 
