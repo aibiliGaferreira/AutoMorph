@@ -36,8 +36,7 @@ def getFeatures(
         save_path,
         pixels_per_window=15,
         sampling_size=6,
-        r_2_threshold=0.96,
-        names_list=None
+        r_2_threshold=0.96
     ):
 
     if isinstance(artery_skeleton, str) and os.path.isdir(os.path.join(artery_skeleton, ".ipynb_checkpoints")):
@@ -47,8 +46,8 @@ def getFeatures(
     if isinstance(vessel_skeleton, str) and os.path.isdir(os.path.join(vessel_skeleton, ".ipynb_checkpoints")):
         shutil.rmtree(os.path.join(vessel_skeleton, ".ipynb_checkpoints"))
 
-    if save_path is not None and not os.path.exists(f'{save_path}/Results/M3/Macular_centred/Width/'):
-        os.makedirs(f'{save_path}/Results/M3/Macular_centred/Width/')
+    if save_path is not None and not os.path.exists(f'{save_path}/Macular_centred/Width/'):
+        os.makedirs(f'{save_path}/Macular_centred/Width/')
  
     binary_FD_binary,binary_VD_binary,binary_Average_width,binary_t2_list,binary_t4_list,binary_t5_list = [],[],[],[],[],[]
     artery_FD_binary,artery_VD_binary,artery_Average_width,artery_t2_list,artery_t4_list,artery_t5_list = [],[],[],[],[],[]
@@ -64,6 +63,10 @@ def getFeatures(
     name_binary_list = []
     name_artery_list = []
     name_vein_list = []
+
+    if isinstance(optic_disc_df, str):
+        optic_disc_df = pd.read_csv(optic_disc_df)
+    names_list = optic_disc_df["Name"]
 
     if isinstance(vessel_skeleton, str):
         vessel_skeleton = sorted(glob.glob(os.path.join(vessel_skeleton, '*.png')))
@@ -98,7 +101,12 @@ def getFeatures(
             binary_FD_binary.append(FD_binary)
             binary_VD_binary.append(VD_binary)
             binary_Average_width.append(Average_width)
-            name_binary_list.append(filename.split('/')[-1] if isinstance(filename, str) else os.path.basename(names_list[index]) if names_list is not None else index)
+            if isinstance(filename, str):
+                name_binary_list.append(filename.replace("\\", "/").split('/')[-1])
+            elif names_list is not None:
+                name_binary_list.append(os.path.basename(names_list[index]))
+            else:
+                name_binary_list.append(index)
     
         except:
             binary_t2_list.append(-1)
@@ -107,7 +115,12 @@ def getFeatures(
             binary_FD_binary.append(-1)
             binary_VD_binary.append(-1)
             binary_Average_width.append(-1)
-            name_binary_list.append(filename.split('/')[-1] if isinstance(filename, str) else os.path.basename(names_list[index]) if names_list is not None else index)
+            if isinstance(filename, str):
+                name_binary_list.append(filename.replace("\\", "/").split('/')[-1])
+            elif names_list is not None:
+                name_binary_list.append(os.path.basename(names_list[index]))
+            else:
+                name_binary_list.append(index)
 
     for index, filename in enumerate(artery_skeleton):
         try:
@@ -138,7 +151,12 @@ def getFeatures(
             artery_Average_width.append(Average_width)
             CRAE_Hubbard_list.append(CRAE_Hubbard)
             CRAE_Knudtson_list.append(CRAE_Knudtson)
-            name_artery_list.append(filename.split('/')[-1] if isinstance(filename, str) else os.path.basename(names_list[index]) if names_list is not None else index)
+            if isinstance(filename, str):
+                name_artery_list.append(filename.replace("\\", "/").split('/')[-1])
+            elif names_list is not None:
+                name_artery_list.append(os.path.basename(names_list[index]))
+            else:
+                name_artery_list.append(index)
 
         except:
             artery_t2_list.append(-1)
@@ -180,7 +198,12 @@ def getFeatures(
             vein_Average_width.append(Average_width)
             CRVE_Hubbard_list.append(CRVE_Hubbard)
             CRVE_Knudtson_list.append(CRVE_Knudtson)
-            name_vein_list.append(filename.split('/')[-1] if isinstance(filename, str) else os.path.basename(names_list[index]) if names_list is not None else index)
+            if isinstance(filename, str):
+                name_vein_list.append(filename.replace("\\", "/").split('/')[-1])
+            elif names_list is not None:
+                name_vein_list.append(os.path.basename(names_list[index]))
+            else:
+                name_vein_list.append(index)
 
         except:
             vein_t2_list.append(-1)
@@ -212,7 +235,7 @@ def getFeatures(
         "Squared_curvature_tortuosity": binary_t4_list,
         "Tortuosity_density": binary_t5_list,
     }).astype({"Name": "object"})
-
+    
     Data4stage2_artery = pd.DataFrame({
         "Name": name_artery_list,
         "Artery_Fractal_dimension": artery_FD_binary,
@@ -224,7 +247,7 @@ def getFeatures(
         "CRAE_Hubbard": CRAE_Hubbard_list,
         "CRAE_Knudtson": CRAE_Knudtson_list,
     }).astype({"Name": "object"})
-
+    
     Data4stage2_vein = pd.DataFrame({
         "Name": name_vein_list,
         "Vein_Fractal_dimension": vein_FD_binary,
@@ -236,7 +259,7 @@ def getFeatures(
         "CRVE_Hubbard": CRVE_Hubbard_list,
         "CRVE_Knudtson": CRVE_Knudtson_list,
     }).astype({"Name": "object"})
-
+    
     Disc_file_binary = pd.merge(Disc_file, Data4stage2_binary, how="outer", on=["Name"])
     artery_vein = pd.merge(Data4stage2_artery, Data4stage2_vein, how="outer", on=["Name"])
     Data4stage2 = pd.merge(Disc_file_binary, artery_vein, how="outer", on=["Name"])
@@ -245,8 +268,8 @@ def getFeatures(
     Data4stage2['AVR_Knudtson'] = Data4stage2['CRAE_Knudtson']/Data4stage2['CRVE_Knudtson']
 
     if save_path is not None:
-        Data4stage2.to_csv(f'{save_path}/Disc_Zone_B_Measurement.csv', index = None, encoding='utf8')
-    else: return Data4stage2
+        Data4stage2.to_csv(f'{save_path}/Macular_centred/Macular_Zone_B_Measurement.csv', index = None, encoding='utf8')
+    return Data4stage2
 
 
 def get_args():

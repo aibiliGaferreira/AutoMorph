@@ -83,7 +83,7 @@ class Retina(object):
             self.segmentation_path = store_path
             self.vessel_image = self._open_image(self.segmentation_path)
             
-        
+        image_path = image_path.replace('\\', '/') if isinstance(image_path, str) else image_path
         if isinstance(image_path, str) and '/' in image_path:
             img_name = image_path.split('_skeleton/')[1]
         elif isinstance(image_path, str) and 'window' in image_path:

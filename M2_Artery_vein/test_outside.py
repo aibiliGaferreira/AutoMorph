@@ -22,13 +22,12 @@ from skimage.morphology import skeletonize,remove_small_objects
 
 AUTOMORPH_DATA = os.getenv('AUTOMORPH_DATA','..')
 
-def filter_frag(images):
+def filter_frag(images, save_path=None):
     if isinstance(images, str):
-        data_path = images
-        if os.path.isdir(data_path + 'raw/.ipynb_checkpoints'):
-            shutil.rmtree(data_path + 'raw/.ipynb_checkpoints')
+        if os.path.isdir(os.path.join(save_path, 'raw/.ipynb_checkpoints')):
+            shutil.rmtree(os.path.join(save_path, 'raw/.ipynb_checkpoints'))
 
-        image_list=os.listdir(data_path + 'raw')
+        image_list=os.listdir(os.path.join(save_path, 'raw'))
     else:
         image_list = images
 
@@ -45,8 +44,8 @@ def filter_frag(images):
     img_skeleton_b_list = []
     
     for i in image_list:
-        if isinstance(images, str):
-            img=io.imread(data_path + 'resized/' + i).astype(np.int64)
+        if isinstance(i, str):
+            img=io.imread(os.path.join(save_path, 'resized', i)).astype(np.int64)
         else:
             img = i.squeeze()
         img = cv2.resize(img,(912,912),interpolation = cv2.INTER_NEAREST)
@@ -56,13 +55,12 @@ def filter_frag(images):
         img_r = remove_small_objects(img_r, max_size=30, connectivity=5)
         img_b = remove_small_objects(img_b, max_size=30, connectivity=5)
         
-        if isinstance(images, str):
-            if not os.path.isdir(data_path + 'artery_binary_process/'):
-                os.makedirs(data_path + 'artery_binary_process/') 
-            io.imsave(data_path + 'artery_binary_process/' + i , 255*(img_r.astype('uint8')),check_contrast=False)
-            if not os.path.isdir(data_path + 'vein_binary_process/'):
-                os.makedirs(data_path + 'vein_binary_process/') 
-            io.imsave(data_path + 'vein_binary_process/' + i , 255*(img_b.astype('uint8')),check_contrast=False)
+        if isinstance(save_path, str):
+            if not os.path.isdir(os.path.join(save_path, 'artery_binary_process/')): os.makedirs(os.path.join(save_path, 'artery_binary_process/')) 
+            io.imsave(os.path.join(save_path, 'artery_binary_process/', i) , 255*(img_r.astype('uint8')),check_contrast=False)
+            
+            if not os.path.isdir(os.path.join(save_path, 'vein_binary_process/')): os.makedirs(os.path.join(save_path, 'vein_binary_process/')) 
+            io.imsave(os.path.join(save_path, 'vein_binary_process/', i) , 255*(img_b.astype('uint8')),check_contrast=False)
         else:
             img_r_list.append(255*img_r.astype('uint8'))
             img_b_list.append(255*img_b.astype('uint8'))
@@ -70,13 +68,11 @@ def filter_frag(images):
         skeleton_r = skeletonize(img_r)
         skeleton_b = skeletonize(img_b)
         
-        if isinstance(images, str):
-            if not os.path.isdir(data_path + 'artery_binary_skeleton/'):
-                os.makedirs(data_path + 'artery_binary_skeleton/') 
-            io.imsave(data_path + 'artery_binary_skeleton/' + i, 255*(skeleton_r.astype('uint8')),check_contrast=False)
-            if not os.path.isdir(data_path + 'vein_binary_skeleton/'):
-                os.makedirs(data_path + 'vein_binary_skeleton/') 
-            io.imsave(data_path + 'vein_binary_skeleton/' + i, 255*(skeleton_b.astype('uint8')),check_contrast=False)
+        if isinstance(save_path, str):
+            if not os.path.isdir(os.path.join(save_path, 'artery_binary_skeleton/')): os.makedirs(os.path.join(save_path, 'artery_binary_skeleton/')) 
+            io.imsave(os.path.join(save_path, 'artery_binary_skeleton/', i), 255*(skeleton_r.astype('uint8')),check_contrast=False)
+            if not os.path.isdir(os.path.join(save_path, 'vein_binary_skeleton/')): os.makedirs(os.path.join(save_path, 'vein_binary_skeleton/')) 
+            io.imsave(os.path.join(save_path, 'vein_binary_skeleton/', i), 255*(skeleton_b.astype('uint8')),check_contrast=False)
         else:
             img_skeleton_r_list.append(255*skeleton_r.astype('uint8'))
             img_skeleton_b_list.append(255*skeleton_b.astype('uint8'))
@@ -129,6 +125,8 @@ def test_net(models, loader, device, save_path=None):
     av_resized = []
     av_raw = []
     uncertainty_resized = []
+    uncertainty_resized_artery = []
+    uncertainty_resized_vein = []
     uncertainty_raw = []
     name_list = []
 
@@ -174,18 +172,22 @@ def test_net(models, loader, device, save_path=None):
             for i in range(n_img):
                 name_list.append(os.path.basename(img_name[i]) if isinstance(img_name[i], str) else img_name[i])
                 if save_path is not None:
-                    save_image(uncertainty_map[i,...]*255, seg_uncertainty_small_path+os.path.basename(img_name[i]))
-                    save_image(uncertainty_map[i,1,...]*255, seg_uncertainty_small_path+os.path.basename(img_name[i]))
-                    save_image(uncertainty_map[i,2,...]*255, seg_uncertainty_small_path+os.path.basename(img_name[i]))
-                uncertainty_resized.append(uncertainty_map[i,...].cpu().numpy())
-
+                    save_image(uncertainty_map[i,...]*255, os.path.join(seg_uncertainty_small_path, os.path.basename(img_name[i]).split(".")[0]+'.png'))
+                    save_image(uncertainty_map[i,1,...]*255, os.path.join(seg_uncertainty_small_path, os.path.basename(img_name[i]).split(".")[0]+'_artery.png'))
+                    save_image(uncertainty_map[i,2,...]*255, os.path.join(seg_uncertainty_small_path, os.path.basename(img_name[i]).split(".")[0]+'_vein.png'))
+                else:
+                    uncertainty_resized.append(uncertainty_map[i,...].cpu().numpy())
+                    uncertainty_resized_artery.append(uncertainty_map[i,1,...].cpu().numpy())
+                    uncertainty_resized_vein.append(uncertainty_map[i,2,...].cpu().numpy())
+                
                 uncertainty_img = Image.fromarray((uncertainty_map[i,1,...]*255).cpu().numpy())
                 uncertainty_img = uncertainty_img.resize((int(ori_width[i]),int(ori_height[i])))
                 uncertainty_tensor = torchvision.transforms.ToTensor()(uncertainty_img)
                 
                 if save_path is not None:
-                    save_image(uncertainty_tensor, seg_uncertainty_raw_path+os.path.basename(img_name[i]))
-                uncertainty_raw.append(uncertainty_tensor.cpu().numpy())
+                    save_image(uncertainty_tensor, os.path.join(seg_uncertainty_raw_path, os.path.basename(img_name[i]).split(".")[0]+'.png'))
+                else:
+                    uncertainty_raw.append(uncertainty_tensor.cpu().numpy())
                 
                 
                 img_r = np.zeros((prediction_decode[i,...].shape[0],prediction_decode[i,...].shape[1]))
@@ -203,13 +205,17 @@ def test_net(models, loader, device, save_path=None):
                 img_ww = cv2.resize(np.float32(img_)*255, (int(ori_width[i]),int(ori_height[i])), interpolation = cv2.INTER_NEAREST)
                 
                 if save_path is not None:
-                    cv2.imwrite(seg_results_small_path+ os.path.basename(img_name[i]), np.float32(img_)*255)
-                    cv2.imwrite(seg_results_raw_path+ os.path.basename(img_name[i]), img_ww)
-                av_resized.append(np.float32(img_)*255)
-                av_raw.append(img_ww)
+                    cv2.imwrite(os.path.join(seg_results_small_path, os.path.basename(img_name[i])), np.float32(img_)*255)
+                    cv2.imwrite(os.path.join(seg_results_raw_path, os.path.basename(img_name[i])), img_ww)
+                else:
+                    av_resized.append(np.float32(img_)*255)
+                    av_raw.append(img_ww)
                 
             pbar.update(imgs.shape[0])
-    return av_resized, av_raw, uncertainty_resized, uncertainty_raw, name_list
+    if save_path is not None:
+        return seg_results_small_path, seg_results_raw_path, seg_uncertainty_small_path, seg_uncertainty_small_path, seg_uncertainty_small_path, seg_uncertainty_raw_path, name_list
+    else:
+        return av_resized, av_raw, uncertainty_resized, uncertainty_resized_artery, uncertainty_resized_vein, uncertainty_raw, name_list
 
 
 

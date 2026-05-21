@@ -17,15 +17,15 @@ from skimage import io
 from .FD_cal import fractal_dimension,vessel_density
 import shutil
 
-AUTOMORPH_DATA = os.getenv('AUTOMORPH_DATA','..')
+AUTOMORPH_DATA = os.getenv('AUTOMORPH_DATA','..') # TODO: remove automorph_Data
 
-def filter_frag(images):
-    if isinstance(images, str):
-        data_path = images
-        if os.path.isdir(data_path + 'resize_binary/.ipynb_checkpoints'):
-            shutil.rmtree(data_path + 'resize_binary/.ipynb_checkpoints')
+def filter_frag(images, save_path=None):
+    if isinstance(save_path, str):
+        data_path = save_path
+        if os.path.isdir(os.path.join(save_path, 'resize_binary/.ipynb_checkpoints')):
+            shutil.rmtree(os.path.join(save_path, 'resize_binary/.ipynb_checkpoints'))
 
-        image_list=os.listdir(data_path + 'resize_binary')
+        image_list=os.listdir(os.path.join(save_path, 'resize_binary'))
     else:
         image_list = images["mask_bin_small_list"]
 
@@ -38,23 +38,23 @@ def filter_frag(images):
     binary_skeleton_list = []
 
     for i in image_list:
-        if isinstance(images, str):
-            img=io.imread(data_path + 'resize_binary/' + i, as_gray=True).astype(np.int64)
+        if isinstance(i, str):
+            img=io.imread(os.path.join(save_path, 'resize_binary', i), as_gray=True).astype(np.int64)
         else: 
             img = i.squeeze()
         img2=img>0
         img2 = remove_small_objects(img2, max_size=30, connectivity=5)
         
-        if isinstance(images, str):
-            if not os.path.isdir(data_path + 'binary_process/'): os.makedirs(data_path + 'binary_process/') 
-            io.imsave(data_path + 'binary_process/' + i , 255*(img2.astype('uint8')),check_contrast=False)
+        if isinstance(save_path, str):
+            if not os.path.isdir(os.path.join(save_path, 'binary_process')): os.makedirs(os.path.join(save_path, 'binary_process')) 
+            io.imsave(os.path.join(save_path, 'binary_process', i), 255*(img2.astype('uint8')),check_contrast=False)
         else:
             binary_process_list.append(img2.astype('uint8'))
 
         skeleton = skeletonize(img2)
-        if isinstance(images, str):
-            if not os.path.isdir(data_path + 'binary_skeleton/'): os.makedirs(data_path + 'binary_skeleton/') 
-            io.imsave(data_path + 'binary_skeleton/' + i, 255*(skeleton.astype('uint8')),check_contrast=False)
+        if isinstance(save_path, str):
+            if not os.path.isdir(os.path.join(save_path, 'binary_skeleton')): os.makedirs(os.path.join(save_path, 'binary_skeleton')) 
+            io.imsave(os.path.join(save_path, 'binary_skeleton', i), 255*(skeleton.astype('uint8')),check_contrast=False)
         else:
             binary_skeleton_list.append(skeleton)
         
@@ -79,12 +79,12 @@ def segment_fundus(data_path, nets, loader, device):
     name_list=[]
     
     if data_path is not None:
-        seg_results_small_path = os.path.join(data_path, "M2", 'resize/')
-        seg_results_small_binary_path = os.path.join(data_path, "M2", 'resize_binary/')
-        seg_results_raw_path = os.path.join(data_path, "M2", 'raw/')
-        seg_results_raw_binary_path = os.path.join(data_path, "M2", 'raw_binary/')
-        seg_uncertainty_small_path = os.path.join(data_path, "M2", 'resize_uncertainty/')
-        seg_uncertainty_raw_path = os.path.join(data_path, "M2", 'raw_uncertainty/')
+        seg_results_small_path = os.path.join(data_path, 'resize/')
+        seg_results_small_binary_path = os.path.join(data_path, 'resize_binary/')
+        seg_results_raw_path = os.path.join(data_path, 'raw/')
+        seg_results_raw_binary_path = os.path.join(data_path, 'raw_binary/')
+        seg_uncertainty_small_path = os.path.join(data_path, 'resize_uncertainty/')
+        seg_uncertainty_raw_path = os.path.join(data_path, 'raw_uncertainty/')
     
         if not os.path.isdir(seg_results_small_path): os.makedirs(seg_results_small_path)
         if not os.path.isdir(seg_results_raw_path): os.makedirs(seg_results_raw_path)
@@ -192,12 +192,9 @@ def test_net(imgs, batch_size=8, device="cpu", dataset_train="ALL-SIX", image_si
         
     images = segment_fundus(save_path, nets, test_loader, device)
     
-    analysis = filter_frag(images)
+    analysis = filter_frag(images, save_path=save_path)
     images["binary_process_list"] = analysis["binary_process_list"]
     images["binary_skeleton_list"] = analysis["binary_skeleton_list"]
-    
-    if save_path is not None and not os.path.exists(os.path.join(save_path, 'M3')):
-        os.makedirs(os.path.join(save_path, 'M3'))
 
     return {
         "images": images,

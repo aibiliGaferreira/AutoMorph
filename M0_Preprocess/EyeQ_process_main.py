@@ -33,15 +33,15 @@ def process(images, save_path, resolution_list = None):
         if isinstance(image_path, str):
             resolution_ = resolution_list['res'][resolution_list['fundus']==os.path.basename(image_path)].values[0] if resolution_list is not None else 0.008
             list_resolution.append(resolution_)
+            img = prep.imread(image_path)
+            name_list.append(os.path.basename(image_path).split('.')[0] + '.png')
+            r_img, borders, mask, r_img, radius_list,centre_list_w, centre_list_h = prep.process_without_gb(img,img,radius_list,centre_list_w, centre_list_h)
 
-            dst_img = f'{save_path}' + os.path.basename(image_path).split('.')[0] + '.png'
+            dst_img = os.path.join(save_path, os.path.basename(image_path).split('.')[0] + '.png')
             if save and os.path.exists(dst_img):
                 img = prep.imread(dst_img)
                 img_list.append(img)
             else:
-                name_list.append(os.path.basename(image_path).split('.')[0] + '.png')
-                img = prep.imread(image_path)
-                r_img, borders, mask, r_img, radius_list,centre_list_w, centre_list_h = prep.process_without_gb(img,img,radius_list,centre_list_w, centre_list_h)
                 img_list.append(r_img)
                 if save: prep.imwrite(dst_img, r_img)
 

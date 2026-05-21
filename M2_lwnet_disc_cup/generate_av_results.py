@@ -30,6 +30,7 @@ parser.add_argument('--config_file', type=str, default=None,
 parser.add_argument('--im_size', help='delimited list input, could be 600,400', type=str, default='512')
 parser.add_argument('--device', type=str, default='cuda:0', help='where to run the training code (e.g. "cpu" or "cuda:0") [default: %(default)s]')
 parser.add_argument('--results_path', type=str, default='results', help='path to save predictions (defaults to results')
+parser.add_argument('--debug_masks_dir', type=str, default=None, help='optional directory to save debug disc/cup masks')
 
 
 def intersection(mask,vessel_, it_x, it_y):
@@ -58,13 +59,13 @@ def intersection(mask,vessel_, it_x, it_y):
     
     
 
-def optic_disc_centre(images, binary_process=None, artery_process=None, vein_process=None, binary_skeleton=None, artery_skeleton=None, vein_skeleton=None, save_path=None, resolution_csv=None, names_list=None):
+def optic_disc_centre(images, binary_process=None, artery_process=None, vein_process=None, binary_skeleton=None, artery_skeleton=None, vein_skeleton=None, save_path=None, resolution_csv=None, names_list=None, debug_masks_dir=None):
     if save_path is not None:
         if os.path.exists(save_path+'.ipynb_checkpoints'):
             shutil.rmtree(save_path+'.ipynb_checkpoints')
         
-        optic_binary_result_path = os.path.join(save_path,'Disc_centred/')
-        macular_binary_result_path = os.path.join(save_path,'Macular_centred/')
+        optic_binary_result_path = os.path.join(save_path, "M3", 'Disc_centred/')
+        macular_binary_result_path = os.path.join(save_path, "M3", 'Macular_centred/')
         if not os.path.exists(optic_binary_result_path): os.makedirs(optic_binary_result_path)
         if not os.path.exists(macular_binary_result_path): os.makedirs(macular_binary_result_path)
     
@@ -213,7 +214,7 @@ def optic_disc_centre(images, binary_process=None, artery_process=None, vein_pro
         disc_ = disc_cup_912[...,2]
         cup_ = disc_cup_912[...,0]
         ## judgement the optic disc/cup segmentation
-            
+
         disc_mask = measure.label(disc_)
         regions = measure.regionprops(disc_mask)
         regions.sort(key=lambda x: x.area, reverse=True)
@@ -229,31 +230,31 @@ def optic_disc_centre(images, binary_process=None, artery_process=None, vein_pro
             for rg in regions[2:]:
                 cup_mask[rg.coords[:,0], rg.coords[:,1]] = 0
         cup_[cup_mask!=0] = 255
-            
+        
         disc_index = np.where(disc_>0)
         disc_index_width = disc_index[1]
         disc_index_height = disc_index[0]
         disc_horizontal_width = np.max(disc_index_width)-np.min(disc_index_width)
         disc_vertical_height = np.max(disc_index_height)-np.min(disc_index_height)
-            
+        
         cup_index = np.where(cup_>0)
         cup_index_width = cup_index[1]
         cup_index_height = cup_index[0]
         cup_horizontal_width = np.max(cup_index_width)-np.min(cup_index_width)
         cup_vertical_height = np.max(cup_index_height)-np.min(cup_index_height)
-            
+        
         cup_width_centre = np.mean(cup_index_width)
         cup_height_centre = np.mean(cup_index_height)
-                
+
         if disc_horizontal_width<(disc_.shape[0]/3) and disc_vertical_height<(disc_.shape[1]/3) and cup_width_centre<=np.max(disc_index_width) and cup_width_centre>=np.min(disc_index_width) and cup_height_centre<=np.max(disc_index_height) and cup_height_centre>=np.min(disc_index_height) and cup_vertical_height<disc_vertical_height and cup_horizontal_width<disc_horizontal_width:
             whole_index = np.where(disc_cup_912>0)
             whole_index_width = whole_index[1]
             whole_index_height = whole_index[0]
-
+            
             horizontal_distance = np.absolute(np.mean(whole_index_height)-disc_cup_912.shape[1]/2)
             vertical_distance = np.absolute(np.mean(whole_index_width)-disc_cup_912.shape[0]/2)
             distance_ = np.sqrt(np.square(horizontal_distance)+np.square(vertical_distance))
-     
+
             #zone_mask_B = np.zeros(binary_process_.shape)
             #zone_mask_C = np.zeros(binary_process_.shape)
             zone_mask_B = np.zeros(disc_cup_912.shape[:2])
@@ -263,11 +264,11 @@ def optic_disc_centre(images, binary_process=None, artery_process=None, vein_pro
             cv2.circle(zone_mask_B,zone_centre,radius=3*radius,color=(255,255,255),thickness=-1)
             cv2.circle(zone_mask_B,zone_centre,radius=2*radius,color=(0,0,0),thickness=-1)
             zone_mask_B = zone_mask_B/255
-
+            
             cv2.circle(zone_mask_C,zone_centre,radius=5*radius,color=(255,255,255),thickness=-1)
             cv2.circle(zone_mask_C,zone_centre,radius=2*radius,color=(0,0,0),thickness=-1)
             zone_mask_C = zone_mask_C/255
-
+            
             ignored_pixels = 1
             if binary_process is not None:
                 if isinstance(binary_process, str) and not os.path.isfile(binary_process): binary_process_ = cv2.imread(binary_vessel_path+'binary_process/'+i)[...,0]
@@ -293,7 +294,7 @@ def optic_disc_centre(images, binary_process=None, artery_process=None, vein_pro
                 binary_skeleton_C = binary_skeleton_*zone_mask_C
 
             if artery_process is not None:
-                if isinstance(artery_process, str) and not os.path.isfile(artery_process): artery_process_ = cv2.imread(artery_vein_path+'artery_binary_process/'+i)[...,0]
+                if isinstance(artery_process, str) and not os.path.isfile(artery_process): artery_process_ = cv2.imread(os.path.join(artery_vein_path, "artery_binary_process", i))[...,0]
                 else: artery_process_ = artery_process[index]
 
                 if artery_process_.shape != zone_mask_B.shape: artery_process_ = cv2.resize(artery_process_, (zone_mask_B.shape[1], zone_mask_B.shape[0]), interpolation=cv2.INTER_NEAREST)
@@ -504,48 +505,48 @@ def optic_disc_centre(images, binary_process=None, artery_process=None, vein_pro
         Pd_optic_centre.to_csv(optic_binary_result_path + 'Disc_cup_results.csv', index = None, encoding='utf8')
         Pd_macular_centre.to_csv(macular_binary_result_path + 'Disc_cup_results.csv', index = None, encoding='utf8')        
     return {
-        "df_optic_centre": Pd_optic_centre,
-        "df_macular_centre": Pd_macular_centre,
+        "df_optic_centre": optic_binary_result_path + 'Disc_cup_results.csv' if isinstance(save_path, str) else Pd_optic_centre,
+        "df_macular_centre": macular_binary_result_path + 'Disc_cup_results.csv' if isinstance(save_path, str) else Pd_macular_centre,
 
-        "disc_binary_process": disc_binary_process,
-        "disc_artery_process": disc_artery_process,
-        "disc_vein_process": disc_vein_process,
-        "disc_binary_skeleton": disc_binary_skeleton,
-        "disc_artery_skeleton": disc_artery_skeleton,
-        "disc_vein_skeleton": disc_vein_skeleton,
+        "disc_binary_process": disc_process_binary_vessel_path if isinstance(save_path, str) else disc_binary_process,
+        "disc_artery_process": disc_process_artery_path if isinstance(save_path, str) else disc_artery_process,
+        "disc_vein_process": disc_process_vein_path if isinstance(save_path, str) else disc_vein_process,
+        "disc_binary_skeleton": disc_skeleton_binary_vessel_path if isinstance(save_path, str) else disc_binary_skeleton,
+        "disc_artery_skeleton": disc_skeleton_artery_path if isinstance(save_path, str) else disc_artery_skeleton,
+        "disc_vein_skeleton": disc_skeleton_vein_path if isinstance(save_path, str) else disc_vein_skeleton,
         
-        "macular_binary_process": macular_binary_process,
-        "macular_artery_process": macular_artery_process,
-        "macular_vein_process": macular_vein_process,
-        "macular_binary_skeleton": macular_binary_skeleton,
-        "macular_artery_skeleton": macular_artery_skeleton,
-        "macular_vein_skeleton": macular_vein_skeleton,
+        "macular_binary_process": macular_process_binary_vessel_path if isinstance(save_path, str) else macular_binary_process,
+        "macular_artery_process": macular_process_artery_path if isinstance(save_path, str) else macular_artery_process,
+        "macular_vein_process": macular_process_vein_path if isinstance(save_path, str) else macular_vein_process,
+        "macular_binary_skeleton": macular_skeleton_binary_vessel_path if isinstance(save_path, str) else macular_binary_skeleton,
+        "macular_artery_skeleton": macular_skeleton_artery_path if isinstance(save_path, str) else macular_artery_skeleton,
+        "macular_vein_skeleton": macular_skeleton_vein_path if isinstance(save_path, str) else macular_vein_skeleton,
 
-        "B_disc_binary_process": binary_disc_process_Bs,
-        "B_disc_artery_process": artery_disc_process_Bs,
-        "B_disc_vein_process": vein_disc_process_Bs,
-        "B_disc_binary_skeleton": binary_disc_skeleton_Bs,
-        "B_disc_artery_skeleton": artery_disc_skeleton_Bs,
-        "B_disc_vein_skeleton": vein_disc_skeleton_Bs,
-        "C_disc_binary_process": binary_disc_process_Cs,
-        "C_disc_artery_process": artery_disc_process_Cs,
-        "C_disc_vein_process": vein_disc_process_Cs,
-        "C_disc_binary_skeleton": binary_disc_skeleton_Cs,
-        "C_disc_artery_skeleton": artery_disc_skeleton_Cs,
-        "C_disc_vein_skeleton": vein_disc_skeleton_Cs,
+        "B_disc_binary_process": B_optic_process_binary_vessel_path if isinstance(save_path, str) else binary_disc_process_Bs,
+        "B_disc_artery_process": B_optic_process_artery_path if isinstance(save_path, str) else artery_disc_process_Bs,
+        "B_disc_vein_process": B_optic_process_vein_path if isinstance(save_path, str) else vein_disc_process_Bs,
+        "B_disc_binary_skeleton": B_optic_skeleton_binary_vessel_path if isinstance(save_path, str) else binary_disc_skeleton_Bs,
+        "B_disc_artery_skeleton": B_optic_skeleton_artery_path if isinstance(save_path, str) else artery_disc_skeleton_Bs,
+        "B_disc_vein_skeleton": B_optic_skeleton_vein_path if isinstance(save_path, str) else vein_disc_skeleton_Bs,
+        "C_disc_binary_process": C_optic_process_binary_vessel_path if isinstance(save_path, str) else binary_disc_process_Cs,
+        "C_disc_artery_process": C_optic_process_artery_path if isinstance(save_path, str) else artery_disc_process_Cs,
+        "C_disc_vein_process": C_optic_process_vein_path if isinstance(save_path, str) else vein_disc_process_Cs,
+        "C_disc_binary_skeleton": C_optic_skeleton_binary_vessel_path if isinstance(save_path, str) else binary_disc_skeleton_Cs,
+        "C_disc_artery_skeleton": C_optic_skeleton_artery_path if isinstance(save_path, str) else artery_disc_skeleton_Cs,
+        "C_disc_vein_skeleton": C_optic_skeleton_vein_path if isinstance(save_path, str) else vein_disc_skeleton_Cs,
 
-        "B_macular_binary_process": binary_macular_process_Bs,
-        "B_macular_artery_process": artery_macular_process_Bs,
-        "B_macular_vein_process": vein_macular_process_Bs,
-        "B_macular_binary_skeleton": binary_macular_skeleton_Bs,
-        "B_macular_artery_skeleton": artery_macular_skeleton_Bs,
-        "B_macular_vein_skeleton": vein_macular_skeleton_Bs,
-        "C_macular_binary_process": binary_macular_process_Cs,
-        "C_macular_artery_process": artery_macular_process_Cs,
-        "C_macular_vein_process": vein_macular_process_Cs,
-        "C_macular_binary_skeleton": binary_macular_skeleton_Cs,
-        "C_macular_artery_skeleton": artery_macular_skeleton_Cs,
-        "C_macular_vein_skeleton": vein_macular_skeleton_Cs
+        "B_macular_binary_process": zone_b_macular_process_vein_path if isinstance(save_path, str) else binary_macular_process_Bs,
+        "B_macular_artery_process": zone_b_macular_process_artery_path if isinstance(save_path, str) else artery_macular_process_Bs,
+        "B_macular_vein_process": zone_b_macular_process_vein_path if isinstance(save_path, str) else vein_macular_process_Bs,
+        "B_macular_binary_skeleton": zone_b_macular_skeleton_binary_vessel_path if isinstance(save_path, str) else binary_macular_skeleton_Bs,
+        "B_macular_artery_skeleton": zone_b_macular_skeleton_artery_path if isinstance(save_path, str) else artery_macular_skeleton_Bs,
+        "B_macular_vein_skeleton": zone_b_macular_skeleton_vein_path if isinstance(save_path, str) else vein_macular_skeleton_Bs,
+        "C_macular_binary_process": zone_c_macular_process_binary_vessel_path if isinstance(save_path, str) else binary_macular_process_Cs,
+        "C_macular_artery_process": zone_c_macular_process_artery_path if isinstance(save_path, str) else artery_macular_process_Cs,
+        "C_macular_vein_process": zone_c_macular_process_vein_path if isinstance(save_path, str) else vein_macular_process_Cs,
+        "C_macular_binary_skeleton": zone_c_macular_skeleton_binary_vessel_path if isinstance(save_path, str) else binary_macular_skeleton_Cs,
+        "C_macular_artery_skeleton": zone_c_macular_skeleton_artery_path if isinstance(save_path, str) else artery_macular_skeleton_Cs,
+        "C_macular_vein_skeleton": zone_c_macular_skeleton_vein_path if isinstance(save_path, str) else vein_macular_skeleton_Cs
     }
 
     
@@ -625,9 +626,9 @@ def prediction_eval(models, test_loader, device, save_path):
                 names_list.append(os.path.basename(img_name[i]) if isinstance(img_name[i], str) else img_name[i])
 
                 if save_path is not None:
-                    save_image(uncertainty_map[i,...]*255, os.path.join(seg_uncertainty_small_path, img_name[i]+'.png'))
-                    save_image(uncertainty_map[i,1,...]*255, os.path.join(seg_uncertainty_small_path, img_name[i]+'_disc.png'))
-                    save_image(uncertainty_map[i,2,...]*255, os.path.join(seg_uncertainty_small_path, img_name[i]+'_cup.png'))
+                    save_image(uncertainty_map[i,...]*255, os.path.join(seg_uncertainty_small_path, os.path.basename(img_name[i]).split(".")[0]+'.png'))
+                    save_image(uncertainty_map[i,1,...]*255, os.path.join(seg_uncertainty_small_path, os.path.basename(img_name[i]).split(".")[0]+'_disc.png'))
+                    save_image(uncertainty_map[i,2,...]*255, os.path.join(seg_uncertainty_small_path, os.path.basename(img_name[i]).split(".")[0]+'_cup.png'))
                 uncertainty_resized.append(uncertainty_map[i,...].cpu().numpy())
 
                 uncertainty_img = Image.fromarray(((uncertainty_map[i,...]*255).cpu().numpy().transpose(1,2,0)).astype(np.uint8))
@@ -635,7 +636,7 @@ def prediction_eval(models, test_loader, device, save_path):
                 uncertainty_tensor = torchvision.transforms.ToTensor()(uncertainty_img)
 
                 if save_path is not None:
-                    save_image(uncertainty_tensor, os.path.join(seg_uncertainty_raw_path, img_name[i]+'.png'))
+                    save_image(uncertainty_tensor, os.path.join(seg_uncertainty_raw_path, os.path.basename(img_name[i]).split(".")[0]+'.png'))
                 uncertainty_raw.append(uncertainty_tensor.cpu().numpy())
                     
                 img_r = np.zeros((prediction_decode[i,...].shape[0],prediction_decode[i,...].shape[1]))
@@ -653,8 +654,8 @@ def prediction_eval(models, test_loader, device, save_path):
                 img_ww = cv2.resize(np.float32(img_)*255, (int(ori_width[i]),int(ori_height[i])), interpolation = cv2.INTER_NEAREST)
 
                 if save_path is not None:
-                    cv2.imwrite(os.path.join(seg_results_small_path, img_name[i]+ '.png'), np.float32(img_)*255)
-                    cv2.imwrite(os.path.join(seg_results_raw_path, img_name[i]+ '.png'), img_ww)
+                    cv2.imwrite(os.path.join(seg_results_small_path, os.path.basename(img_name[i]).split(".")[0]+ '.png'), np.float32(img_)*255)
+                    cv2.imwrite(os.path.join(seg_results_raw_path, os.path.basename(img_name[i]).split(".")[0]+ '.png'), img_ww)
                 cup_resized.append(np.float32(img_)*255)
                 cup_raw.append(img_ww)
                 pbar.update(imgs.shape[0])
@@ -756,5 +757,10 @@ if __name__ == '__main__':
     binary_vessel_path = f'{AUTOMORPH_DATA}/Results/M2/binary_vessel/'
     artery_vein_path = f'{AUTOMORPH_DATA}/Results/M2/artery_vein/'
     
-    optic_disc_centre(result_path,binary_vessel_path, artery_vein_path)
+    optic_disc_centre(
+        result_path,
+        binary_vessel_path,
+        artery_vein_path,
+        debug_masks_dir=args.debug_masks_dir
+    )
     

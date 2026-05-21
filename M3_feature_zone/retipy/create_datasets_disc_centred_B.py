@@ -37,7 +37,6 @@ def getFeatures(
         pixels_per_window=15,
         sampling_size=6,
         r_2_threshold=0.96,
-        names_list=None
     ):
 
     if isinstance(artery_skeleton, str) and os.path.isdir(os.path.join(artery_skeleton, ".ipynb_checkpoints")):
@@ -47,8 +46,8 @@ def getFeatures(
     if isinstance(vein_skeleton, str) and os.path.isdir(os.path.join(vein_skeleton, ".ipynb_checkpoints")):
         shutil.rmtree(os.path.join(vein_skeleton, ".ipynb_checkpoints"))
 
-    if save_path is not None and not os.path.exists(f'{save_path}/Results/M3/Disc_centred/Width/'):
-        os.makedirs(f'{save_path}/Results/M3/Disc_centred/Width/')
+    if save_path is not None and not os.path.exists(f'{save_path}/Disc_centred/Width/'):
+        os.makedirs(f'{save_path}/Disc_centred/Width/')
 
     binary_FD_binary,binary_VD_binary,binary_Average_width,binary_t2_list,binary_t4_list,binary_t5_list = [],[],[],[],[],[]
     artery_FD_binary,artery_VD_binary,artery_Average_width,artery_t2_list,artery_t4_list,artery_t5_list = [],[],[],[],[],[]
@@ -65,6 +64,10 @@ def getFeatures(
     name_artery_list = []
     name_vein_list = []
 
+    if isinstance(optic_disc_df, str):
+        optic_disc_df = pd.read_csv(optic_disc_df)
+    names_list = optic_disc_df["Name"]
+
     if isinstance(vessel_skeleton, str):
         vessel_skeleton = sorted(glob.glob(os.path.join(vessel_skeleton, "*.png")))
     if isinstance(artery_skeleton, str):
@@ -73,123 +76,104 @@ def getFeatures(
         vein_skeleton = sorted(glob.glob(os.path.join(vein_skeleton, "*.png")))
 
     for index, filename in enumerate(vessel_skeleton):
-        #try:
-            segmentedImage = retina.Retina(
-                None,
-                filename,
-                store_path=vessel_process,
-                index=index,
-                resolution=resolution_df)
-            window_sizes = [912]
-            window = retina.Window(segmentedImage, window_sizes[-1], min_pixels=pixels_per_window)
+        segmentedImage = retina.Retina(
+            None,
+            filename,
+            store_path=vessel_process,
+            index=index,
+            resolution=resolution_df)
+        window_sizes = [912]
+        window = retina.Window(segmentedImage, window_sizes[-1], min_pixels=pixels_per_window)
 
-            FD_binary,VD_binary,Average_width,t2, t4, td, vessel_count_list, w1_list, w1_list_average, _, _,_,_ = tortuosity_measures.evaluate_window(
-                window,
-                pixels_per_window,
-                sampling_size,
-                r_2_threshold,
-                store_path=vessel_process,
-                vessel_type="vessel"
-            )
+        FD_binary,VD_binary,Average_width,t2, t4, td, vessel_count_list, w1_list, w1_list_average, _, _,_,_ = tortuosity_measures.evaluate_window(
+            window,
+            pixels_per_window,
+            sampling_size,
+            r_2_threshold,
+            store_path=vessel_process,
+            vessel_type="vessel"
+        )
 
-            binary_t2_list.append(t2)
-            binary_t4_list.append(t4)
-            binary_t5_list.append(td)
-            binary_FD_binary.append(FD_binary)
-            binary_VD_binary.append(VD_binary)
-            binary_Average_width.append(Average_width)
-            name_binary_list.append(filename.split('/')[-1] if isinstance(filename, str) else os.path.basename(names_list[index]) if names_list is not None else index)
-
-        #except:
-        #    binary_t2_list.append(-1)
-        #    binary_t4_list.append(-1)
-        #    binary_t5_list.append(-1)
-        #    binary_FD_binary.append(-1)
-        #    binary_VD_binary.append(-1)
-        #    binary_Average_width.append(-1)
-        #    name_binary_list.append(filename.split('/')[-1] if isinstance(filename, str) else os.path.basename(names_list[index]) if names_list is not None else index)
+        binary_t2_list.append(t2)
+        binary_t4_list.append(t4)
+        binary_t5_list.append(td)
+        binary_FD_binary.append(FD_binary)
+        binary_VD_binary.append(VD_binary)
+        binary_Average_width.append(Average_width)
+        if isinstance(filename, str):
+            name_binary_list.append(filename.replace("\\", "/").split('/')[-1])
+        elif names_list is not None:
+            name_binary_list.append(os.path.basename(names_list[index]))
+        else:
+            name_binary_list.append(index)
 
     for index, filename in enumerate(artery_skeleton):
-        #try:
-            segmentedImage = retina.Retina(
-                None,
-                filename,
-                store_path=artery_process,
-                index=index,
-                resolution=resolution_df)
-            window_sizes = [912]
-            window = retina.Window(segmentedImage, window_sizes[-1], min_pixels=pixels_per_window)
+        segmentedImage = retina.Retina(
+            None,
+            filename,
+            store_path=artery_process,
+            index=index,
+            resolution=resolution_df)
+        window_sizes = [912]
+        window = retina.Window(segmentedImage, window_sizes[-1], min_pixels=pixels_per_window)
             
-            FD_binary,VD_binary,Average_width,t2,t4,td,vessel_count_list,w1_list,w1_list_average,CRAE_Hubbard,_,CRAE_Knudtson,_ = tortuosity_measures.evaluate_window(
-                window,
-                pixels_per_window,
-                sampling_size,
-                r_2_threshold,
-                store_path=artery_process,
-                vessel_type="artery"
-            )
+        FD_binary,VD_binary,Average_width,t2,t4,td,vessel_count_list,w1_list,w1_list_average,CRAE_Hubbard,_,CRAE_Knudtson,_ = tortuosity_measures.evaluate_window(
+            window,
+            pixels_per_window,
+            sampling_size,
+            r_2_threshold,
+            store_path=artery_process,
+            vessel_type="artery"
+        )
 
-            artery_t2_list.append(t2)
-            artery_t4_list.append(t4)
-            artery_t5_list.append(td)
-            artery_FD_binary.append(FD_binary)
-            artery_VD_binary.append(VD_binary)
-            artery_Average_width.append(Average_width)
-            CRAE_Hubbard_list.append(CRAE_Hubbard)
-            CRAE_Knudtson_list.append(CRAE_Knudtson)
-            name_artery_list.append(filename.split('/')[-1] if isinstance(filename, str) else os.path.basename(names_list[index]) if names_list is not None else index)
-
-        #except:
-        #    artery_t2_list.append(-1)
-        #    artery_t4_list.append(-1)
-        #    artery_t5_list.append(-1)
-        #    artery_FD_binary.append(-1)
-        #    artery_VD_binary.append(-1)
-        #    artery_Average_width.append(-1)
-        #    CRAE_Hubbard_list.append(-1)
-        #    CRAE_Knudtson_list.append(-1)    
-        #    name_artery_list.append(filename.split('/')[-1] if isinstance(filename, str) else os.path.basename(names_list[index]) if names_list is not None else index)
+        artery_t2_list.append(t2)
+        artery_t4_list.append(t4)
+        artery_t5_list.append(td)
+        artery_FD_binary.append(FD_binary)
+        artery_VD_binary.append(VD_binary)
+        artery_Average_width.append(Average_width)
+        CRAE_Hubbard_list.append(CRAE_Hubbard)
+        CRAE_Knudtson_list.append(CRAE_Knudtson)
+        if isinstance(filename, str):
+            name_artery_list.append(filename.replace("\\", "/").split('/')[-1])
+        elif names_list is not None:
+            name_artery_list.append(os.path.basename(names_list[index]))
+        else:
+            name_artery_list.append(index)
 
     for index, filename in enumerate(vein_skeleton):
-        #try:
-            segmentedImage = retina.Retina(
-                None,
-                filename,
-                store_path=vein_process,
-                index=index,
-                resolution=resolution_df)
-            window_sizes = [912]
-            window = retina.Window(segmentedImage, window_sizes[-1], min_pixels=pixels_per_window)
+        segmentedImage = retina.Retina(
+            None,
+            filename,
+            store_path=vein_process,
+            index=index,
+            resolution=resolution_df)
+        window_sizes = [912]
+        window = retina.Window(segmentedImage, window_sizes[-1], min_pixels=pixels_per_window)
 
-            FD_binary,VD_binary,Average_width,t2,t4,td,vessel_count_list,w1_list,w1_list_average,_,CRVE_Hubbard,_,CRVE_Knudtson = tortuosity_measures.evaluate_window(
-                window,
-                pixels_per_window,
-                sampling_size,
-                r_2_threshold,
-                store_path=vein_process,
-                vessel_type="vein"
-            )
+        FD_binary,VD_binary,Average_width,t2,t4,td,vessel_count_list,w1_list,w1_list_average,_,CRVE_Hubbard,_,CRVE_Knudtson = tortuosity_measures.evaluate_window(
+            window,
+            pixels_per_window,
+            sampling_size,
+            r_2_threshold,
+            store_path=vein_process,
+            vessel_type="vein"
+        )
 
-            vein_t2_list.append(t2)
-            vein_t4_list.append(t4)
-            vein_t5_list.append(td)
-            vein_FD_binary.append(FD_binary)
-            vein_VD_binary.append(VD_binary)
-            vein_Average_width.append(Average_width)
-            CRVE_Hubbard_list.append(CRVE_Hubbard)
-            CRVE_Knudtson_list.append(CRVE_Knudtson)
-            name_vein_list.append(filename.split('/')[-1] if isinstance(filename, str) else os.path.basename(names_list[index]) if names_list is not None else index)
-
-        #except:
-        #    vein_t2_list.append(-1)
-        #    vein_t4_list.append(-1)
-        #    vein_t5_list.append(-1)
-        #    vein_FD_binary.append(-1)
-        #    vein_VD_binary.append(-1)
-        #    vein_Average_width.append(-1)
-        #    CRVE_Hubbard_list.append(-1)
-        #    CRVE_Knudtson_list.append(-1)
-        #    name_vein_list.append(filename.split('/')[-1] if isinstance(filename, str) else os.path.basename(names_list[index]) if names_list is not None else index)
+        vein_t2_list.append(t2)
+        vein_t4_list.append(t4)
+        vein_t5_list.append(td)
+        vein_FD_binary.append(FD_binary)
+        vein_VD_binary.append(VD_binary)
+        vein_Average_width.append(Average_width)
+        CRVE_Hubbard_list.append(CRVE_Hubbard)
+        CRVE_Knudtson_list.append(CRVE_Knudtson)
+        if isinstance(filename, str):
+            name_vein_list.append(filename.replace("\\", "/").split('/')[-1])
+        elif names_list is not None:
+            name_vein_list.append(os.path.basename(names_list[index]))
+        else:
+            name_vein_list.append(index)
 
     if isinstance(optic_disc_df, str):
         Disc_file = pd.read_csv(optic_disc_df).astype({"Name": "object"})
@@ -243,8 +227,8 @@ def getFeatures(
     Data4stage2['AVR_Knudtson'] = Data4stage2['CRAE_Knudtson']/Data4stage2['CRVE_Knudtson']
 
     if save_path is not None:
-        Data4stage2.to_csv(f'{save_path}/Disc_Zone_B_Measurement.csv', index = None, encoding='utf8')
-    else: return Data4stage2
+        Data4stage2.to_csv(f'{save_path}/Disc_centred/Disc_Zone_B_Measurement.csv', index = None, encoding='utf8')
+    return Data4stage2
 
 
 def get_args():
