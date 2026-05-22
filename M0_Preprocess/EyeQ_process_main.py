@@ -28,6 +28,7 @@ def process(images, save_path, resolution_list = None):
             resolution_list = pd.read_csv(f'{AUTOMORPH_DATA}/resolution_information.csv')
     elif type(resolution_list) == str:
         resolution_list = pd.read_csv(resolution_list)
+    
     img_list = []
     for index, image_path in enumerate(images):
         if isinstance(image_path, str):
@@ -37,13 +38,16 @@ def process(images, save_path, resolution_list = None):
             name_list.append(os.path.basename(image_path).split('.')[0] + '.png')
             r_img, borders, mask, r_img, radius_list,centre_list_w, centre_list_h = prep.process_without_gb(img,img,radius_list,centre_list_w, centre_list_h)
 
-            dst_img = os.path.join(save_path, os.path.basename(image_path).split('.')[0] + '.png')
-            if save and os.path.exists(dst_img):
-                img = prep.imread(dst_img)
-                img_list.append(img)
+            if save:
+                dst_img = os.path.join(save_path, os.path.basename(image_path).split('.')[0] + '.png')
+                if os.path.exists(dst_img):
+                    img = prep.imread(dst_img)
+                    img_list.append(img)
+                else:
+                    img_list.append(r_img)
+                    prep.imwrite(dst_img, r_img)
             else:
                 img_list.append(r_img)
-                if save: prep.imwrite(dst_img, r_img)
 
         else:
             resolution_ = resolution_list['res'][index] if resolution_list is not None else 0.008

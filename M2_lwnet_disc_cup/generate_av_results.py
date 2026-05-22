@@ -30,7 +30,6 @@ parser.add_argument('--config_file', type=str, default=None,
 parser.add_argument('--im_size', help='delimited list input, could be 600,400', type=str, default='512')
 parser.add_argument('--device', type=str, default='cuda:0', help='where to run the training code (e.g. "cpu" or "cuda:0") [default: %(default)s]')
 parser.add_argument('--results_path', type=str, default='results', help='path to save predictions (defaults to results')
-parser.add_argument('--debug_masks_dir', type=str, default=None, help='optional directory to save debug disc/cup masks')
 
 
 def intersection(mask,vessel_, it_x, it_y):
@@ -59,7 +58,7 @@ def intersection(mask,vessel_, it_x, it_y):
     
     
 
-def optic_disc_centre(images, binary_process=None, artery_process=None, vein_process=None, binary_skeleton=None, artery_skeleton=None, vein_skeleton=None, save_path=None, resolution_csv=None, names_list=None, debug_masks_dir=None):
+def optic_disc_centre(images, binary_process=None, artery_process=None, vein_process=None, binary_skeleton=None, artery_skeleton=None, vein_skeleton=None, save_path=None, resolution_csv=None, names_list=None):
     if save_path is not None:
         if os.path.exists(save_path+'.ipynb_checkpoints'):
             shutil.rmtree(save_path+'.ipynb_checkpoints')
@@ -508,45 +507,45 @@ def optic_disc_centre(images, binary_process=None, artery_process=None, vein_pro
         "df_optic_centre": optic_binary_result_path + 'Disc_cup_results.csv' if isinstance(save_path, str) else Pd_optic_centre,
         "df_macular_centre": macular_binary_result_path + 'Disc_cup_results.csv' if isinstance(save_path, str) else Pd_macular_centre,
 
-        "disc_binary_process": disc_process_binary_vessel_path if isinstance(save_path, str) else disc_binary_process,
-        "disc_artery_process": disc_process_artery_path if isinstance(save_path, str) else disc_artery_process,
-        "disc_vein_process": disc_process_vein_path if isinstance(save_path, str) else disc_vein_process,
-        "disc_binary_skeleton": disc_skeleton_binary_vessel_path if isinstance(save_path, str) else disc_binary_skeleton,
-        "disc_artery_skeleton": disc_skeleton_artery_path if isinstance(save_path, str) else disc_artery_skeleton,
-        "disc_vein_skeleton": disc_skeleton_vein_path if isinstance(save_path, str) else disc_vein_skeleton,
+        "disc_binary_process": disc_process_binary_vessel_path if isinstance(save_path, str) and binary_process is not None else disc_binary_process,
+        "disc_artery_process": disc_process_artery_path if isinstance(save_path, str) and artery_process is not None else disc_artery_process,
+        "disc_vein_process": disc_process_vein_path if isinstance(save_path, str) and vein_process is not None else disc_vein_process,
+        "disc_binary_skeleton": disc_skeleton_binary_vessel_path if isinstance(save_path, str) and binary_process is not None else disc_binary_skeleton,
+        "disc_artery_skeleton": disc_skeleton_artery_path if isinstance(save_path, str) and artery_process is not None else disc_artery_skeleton,
+        "disc_vein_skeleton": disc_skeleton_vein_path if isinstance(save_path, str) and vein_process is not None else disc_vein_skeleton,
         
-        "macular_binary_process": macular_process_binary_vessel_path if isinstance(save_path, str) else macular_binary_process,
-        "macular_artery_process": macular_process_artery_path if isinstance(save_path, str) else macular_artery_process,
-        "macular_vein_process": macular_process_vein_path if isinstance(save_path, str) else macular_vein_process,
-        "macular_binary_skeleton": macular_skeleton_binary_vessel_path if isinstance(save_path, str) else macular_binary_skeleton,
-        "macular_artery_skeleton": macular_skeleton_artery_path if isinstance(save_path, str) else macular_artery_skeleton,
-        "macular_vein_skeleton": macular_skeleton_vein_path if isinstance(save_path, str) else macular_vein_skeleton,
+        "macular_binary_process": macular_process_binary_vessel_path if isinstance(save_path, str) and binary_process is not None else macular_binary_process,
+        "macular_artery_process": macular_process_artery_path if isinstance(save_path, str) and artery_process is not None else macular_artery_process,
+        "macular_vein_process": macular_process_vein_path if isinstance(save_path, str) and vein_process is not None else macular_vein_process,
+        "macular_binary_skeleton": macular_skeleton_binary_vessel_path if isinstance(save_path, str) and binary_process is not None else macular_binary_skeleton,
+        "macular_artery_skeleton": macular_skeleton_artery_path if isinstance(save_path, str) and artery_process is not None else macular_artery_skeleton,
+        "macular_vein_skeleton": macular_skeleton_vein_path if isinstance(save_path, str) and vein_process is not None else macular_vein_skeleton,
 
-        "B_disc_binary_process": B_optic_process_binary_vessel_path if isinstance(save_path, str) else binary_disc_process_Bs,
-        "B_disc_artery_process": B_optic_process_artery_path if isinstance(save_path, str) else artery_disc_process_Bs,
-        "B_disc_vein_process": B_optic_process_vein_path if isinstance(save_path, str) else vein_disc_process_Bs,
-        "B_disc_binary_skeleton": B_optic_skeleton_binary_vessel_path if isinstance(save_path, str) else binary_disc_skeleton_Bs,
-        "B_disc_artery_skeleton": B_optic_skeleton_artery_path if isinstance(save_path, str) else artery_disc_skeleton_Bs,
-        "B_disc_vein_skeleton": B_optic_skeleton_vein_path if isinstance(save_path, str) else vein_disc_skeleton_Bs,
-        "C_disc_binary_process": C_optic_process_binary_vessel_path if isinstance(save_path, str) else binary_disc_process_Cs,
-        "C_disc_artery_process": C_optic_process_artery_path if isinstance(save_path, str) else artery_disc_process_Cs,
-        "C_disc_vein_process": C_optic_process_vein_path if isinstance(save_path, str) else vein_disc_process_Cs,
-        "C_disc_binary_skeleton": C_optic_skeleton_binary_vessel_path if isinstance(save_path, str) else binary_disc_skeleton_Cs,
-        "C_disc_artery_skeleton": C_optic_skeleton_artery_path if isinstance(save_path, str) else artery_disc_skeleton_Cs,
-        "C_disc_vein_skeleton": C_optic_skeleton_vein_path if isinstance(save_path, str) else vein_disc_skeleton_Cs,
+        "B_disc_binary_process": B_optic_process_binary_vessel_path if isinstance(save_path, str) and binary_process is not None else binary_disc_process_Bs,
+        "B_disc_artery_process": B_optic_process_artery_path if isinstance(save_path, str) and artery_process is not None else artery_disc_process_Bs,
+        "B_disc_vein_process": B_optic_process_vein_path if isinstance(save_path, str) and vein_process is not None else vein_disc_process_Bs,
+        "B_disc_binary_skeleton": B_optic_skeleton_binary_vessel_path if isinstance(save_path, str) and binary_process is not None else binary_disc_skeleton_Bs,
+        "B_disc_artery_skeleton": B_optic_skeleton_artery_path if isinstance(save_path, str) and artery_process is not None else artery_disc_skeleton_Bs,
+        "B_disc_vein_skeleton": B_optic_skeleton_vein_path if isinstance(save_path, str) and vein_process is not None else vein_disc_skeleton_Bs,
+        "C_disc_binary_process": C_optic_process_binary_vessel_path if isinstance(save_path, str) and binary_process is not None else binary_disc_process_Cs,
+        "C_disc_artery_process": C_optic_process_artery_path if isinstance(save_path, str) and artery_process is not None else artery_disc_process_Cs,
+        "C_disc_vein_process": C_optic_process_vein_path if isinstance(save_path, str) and vein_process is not None else vein_disc_process_Cs,
+        "C_disc_binary_skeleton": C_optic_skeleton_binary_vessel_path if isinstance(save_path, str) and binary_process is not None else binary_disc_skeleton_Cs,
+        "C_disc_artery_skeleton": C_optic_skeleton_artery_path if isinstance(save_path, str) and artery_process is not None else artery_disc_skeleton_Cs,
+        "C_disc_vein_skeleton": C_optic_skeleton_vein_path if isinstance(save_path, str) and vein_process is not None else vein_disc_skeleton_Cs,
 
-        "B_macular_binary_process": zone_b_macular_process_vein_path if isinstance(save_path, str) else binary_macular_process_Bs,
-        "B_macular_artery_process": zone_b_macular_process_artery_path if isinstance(save_path, str) else artery_macular_process_Bs,
-        "B_macular_vein_process": zone_b_macular_process_vein_path if isinstance(save_path, str) else vein_macular_process_Bs,
-        "B_macular_binary_skeleton": zone_b_macular_skeleton_binary_vessel_path if isinstance(save_path, str) else binary_macular_skeleton_Bs,
-        "B_macular_artery_skeleton": zone_b_macular_skeleton_artery_path if isinstance(save_path, str) else artery_macular_skeleton_Bs,
-        "B_macular_vein_skeleton": zone_b_macular_skeleton_vein_path if isinstance(save_path, str) else vein_macular_skeleton_Bs,
-        "C_macular_binary_process": zone_c_macular_process_binary_vessel_path if isinstance(save_path, str) else binary_macular_process_Cs,
-        "C_macular_artery_process": zone_c_macular_process_artery_path if isinstance(save_path, str) else artery_macular_process_Cs,
-        "C_macular_vein_process": zone_c_macular_process_vein_path if isinstance(save_path, str) else vein_macular_process_Cs,
-        "C_macular_binary_skeleton": zone_c_macular_skeleton_binary_vessel_path if isinstance(save_path, str) else binary_macular_skeleton_Cs,
-        "C_macular_artery_skeleton": zone_c_macular_skeleton_artery_path if isinstance(save_path, str) else artery_macular_skeleton_Cs,
-        "C_macular_vein_skeleton": zone_c_macular_skeleton_vein_path if isinstance(save_path, str) else vein_macular_skeleton_Cs
+        "B_macular_binary_process": zone_b_macular_process_vein_path if isinstance(save_path, str) and binary_process is not None else binary_macular_process_Bs,
+        "B_macular_artery_process": zone_b_macular_process_artery_path if isinstance(save_path, str) and artery_process is not None else artery_macular_process_Bs,
+        "B_macular_vein_process": zone_b_macular_process_vein_path if isinstance(save_path, str) and vein_process is not None else vein_macular_process_Bs,
+        "B_macular_binary_skeleton": zone_b_macular_skeleton_binary_vessel_path if isinstance(save_path, str) and binary_process is not None else binary_macular_skeleton_Bs,
+        "B_macular_artery_skeleton": zone_b_macular_skeleton_artery_path if isinstance(save_path, str) and artery_process is not None else artery_macular_skeleton_Bs,
+        "B_macular_vein_skeleton": zone_b_macular_skeleton_vein_path if isinstance(save_path, str) and vein_process is not None else vein_macular_skeleton_Bs,
+        "C_macular_binary_process": zone_c_macular_process_binary_vessel_path if isinstance(save_path, str) and binary_process is not None else binary_macular_process_Cs,
+        "C_macular_artery_process": zone_c_macular_process_artery_path if isinstance(save_path, str) and artery_process is not None else artery_macular_process_Cs,
+        "C_macular_vein_process": zone_c_macular_process_vein_path if isinstance(save_path, str) and vein_process is not None else vein_macular_process_Cs,
+        "C_macular_binary_skeleton": zone_c_macular_skeleton_binary_vessel_path if isinstance(save_path, str) and binary_process is not None else binary_macular_skeleton_Cs,
+        "C_macular_artery_skeleton": zone_c_macular_skeleton_artery_path if isinstance(save_path, str) and artery_process is not None else artery_macular_skeleton_Cs,
+        "C_macular_vein_skeleton": zone_c_macular_skeleton_vein_path if isinstance(save_path, str) and vein_process is not None else vein_macular_skeleton_Cs
     }
 
     
@@ -760,7 +759,6 @@ if __name__ == '__main__':
     optic_disc_centre(
         result_path,
         binary_vessel_path,
-        artery_vein_path,
-        debug_masks_dir=args.debug_masks_dir
+        artery_vein_path
     )
     
