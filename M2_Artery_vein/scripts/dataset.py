@@ -170,10 +170,10 @@ class LearningAVSegData_OOD(Dataset):
             self.ids = imgs
             self.imgs = [Image.open(file) for file in imgs]
         elif isinstance(imgs, np.ndarray) and imgs.ndim == 3: # Single memory image
-            self.ids = ["0"]
+            self.ids = ["0.png"]
             self.imgs = [Image.fromarray(imgs)]
         else: # List of images
-            self.ids = list(map(str, range(len(imgs))))
+            self.ids = list(map(lambda x: str(x) + ".png", range(len(imgs))))
             self.imgs = [Image.fromarray(img) if isinstance(img, np.ndarray) else img for img in imgs]
         
         logging.info(f'Creating dataset with {len(self.ids)} examples')

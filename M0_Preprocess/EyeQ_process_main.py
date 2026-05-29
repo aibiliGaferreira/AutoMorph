@@ -5,8 +5,6 @@ from PIL import ImageFile
 import shutil
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
-AUTOMORPH_DATA = os.getenv('AUTOMORPH_DATA','..')
-
 def process(images, save_path, resolution_list = None):
     
     radius_list = []
@@ -24,8 +22,8 @@ def process(images, save_path, resolution_list = None):
         images = [images]
     
     if resolution_list is None:
-        if os.path.exists(f'{AUTOMORPH_DATA}/resolution_information.csv'):
-            resolution_list = pd.read_csv(f'{AUTOMORPH_DATA}/resolution_information.csv')
+        if os.path.exists(f'data/resolution_information.csv'):
+            resolution_list = pd.read_csv(f'data/resolution_information.csv')
     elif type(resolution_list) == str:
         resolution_list = pd.read_csv(resolution_list)
     
@@ -67,10 +65,10 @@ def process(images, save_path, resolution_list = None):
     return img_list, Data4stage2
 
 if __name__ == "__main__":
-    if os.path.exists(f'{AUTOMORPH_DATA}/images/.ipynb_checkpoints'):
-        shutil.rmtree(f'{AUTOMORPH_DATA}/images/.ipynb_checkpoints')
-    image_list = sorted(os.listdir(f'{AUTOMORPH_DATA}/images'))
-    save_path = f'{AUTOMORPH_DATA}/Results/M0/images/'
+    if os.path.exists(f'data/images/.ipynb_checkpoints'):
+        shutil.rmtree(f'data/images/.ipynb_checkpoints')
+    image_list = sorted(os.listdir(f'data/images'))
+    save_path = f'data/output/Results/M0/images/'
     if not os.path.exists(save_path):
         os.makedirs(save_path)
 

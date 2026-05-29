@@ -18,8 +18,6 @@ import pandas as pd
 from skimage.morphology import remove_small_objects
 import logging
 
-AUTOMORPH_DATA = os.getenv('AUTOMORPH_DATA','..')
-
 # argument parsing
 parser = argparse.ArgumentParser()
 required_named = parser.add_argument_group('required arguments')
@@ -701,7 +699,7 @@ if __name__ == '__main__':
     else:
         sys.exit('im_size should be a number or a tuple of two numbers')
 
-    data_path = f'{AUTOMORPH_DATA}/Results/M1/Good_quality/'
+    data_path = f'data/output/Results/M1/Good_quality/'
 
     csv_path = 'test_all.csv'
     test_loader = get_test_dataset(data_path, csv_path=csv_path, tg_size=tg_size)
@@ -752,9 +750,9 @@ if __name__ == '__main__':
 
     prediction_eval(model_1,model_2,model_3,model_4,model_5,model_6,model_7,model_8, test_loader)
     
-    result_path = f'{AUTOMORPH_DATA}/Results/M2/optic_disc_cup/resized/'
-    binary_vessel_path = f'{AUTOMORPH_DATA}/Results/M2/binary_vessel/'
-    artery_vein_path = f'{AUTOMORPH_DATA}/Results/M2/artery_vein/'
+    result_path = f'data/output/Results/M2/optic_disc_cup/resized/'
+    binary_vessel_path = f'data/output/Results/M2/binary_vessel/'
+    artery_vein_path = f'data/output/Results/M2/artery_vein/'
     
     optic_disc_centre(
         result_path,

@@ -20,8 +20,6 @@ from .scripts.utils import Define_image_size
 from .FD_cal import fractal_dimension,vessel_density
 from skimage.morphology import skeletonize,remove_small_objects
 
-AUTOMORPH_DATA = os.getenv('AUTOMORPH_DATA','..')
-
 def filter_frag(images, save_path=None):
     if isinstance(images, str):
         if os.path.isdir(os.path.join(save_path, 'raw/.ipynb_checkpoints')):
@@ -43,7 +41,7 @@ def filter_frag(images, save_path=None):
     img_skeleton_r_list = []
     img_skeleton_b_list = []
     
-    for i in image_list:
+    for index, i in enumerate(image_list):
         if isinstance(i, str):
             img=io.imread(os.path.join(save_path, 'resized', i)).astype(np.int64)
         else:
@@ -57,10 +55,16 @@ def filter_frag(images, save_path=None):
         
         if isinstance(save_path, str):
             if not os.path.isdir(os.path.join(save_path, 'artery_binary_process/')): os.makedirs(os.path.join(save_path, 'artery_binary_process/')) 
-            io.imsave(os.path.join(save_path, 'artery_binary_process/', i) , 255*(img_r.astype('uint8')),check_contrast=False)
-            
+            if isinstance(i, str):
+                io.imsave(os.path.join(save_path, 'artery_binary_process/', i) , 255*(img_r.astype('uint8')),check_contrast=False)
+            else:
+                io.imsave(os.path.join(save_path, 'artery_binary_process/', str(index)+'.png') , 255*(img_r.astype('uint8')),check_contrast=False)
+
             if not os.path.isdir(os.path.join(save_path, 'vein_binary_process/')): os.makedirs(os.path.join(save_path, 'vein_binary_process/')) 
-            io.imsave(os.path.join(save_path, 'vein_binary_process/', i) , 255*(img_b.astype('uint8')),check_contrast=False)
+            if isinstance(i, str):
+                io.imsave(os.path.join(save_path, 'vein_binary_process/', i) , 255*(img_b.astype('uint8')),check_contrast=False)
+            else:
+                io.imsave(os.path.join(save_path, 'vein_binary_process/', str(index)+'.png') , 255*(img_b.astype('uint8')),check_contrast=False)
         else:
             img_r_list.append(255*img_r.astype('uint8'))
             img_b_list.append(255*img_b.astype('uint8'))
@@ -70,9 +74,15 @@ def filter_frag(images, save_path=None):
         
         if isinstance(save_path, str):
             if not os.path.isdir(os.path.join(save_path, 'artery_binary_skeleton/')): os.makedirs(os.path.join(save_path, 'artery_binary_skeleton/')) 
-            io.imsave(os.path.join(save_path, 'artery_binary_skeleton/', i), 255*(skeleton_r.astype('uint8')),check_contrast=False)
+            if isinstance(i, str):
+                io.imsave(os.path.join(save_path, 'artery_binary_skeleton/', i), 255*(skeleton_r.astype('uint8')),check_contrast=False)
+            else:
+                io.imsave(os.path.join(save_path, 'artery_binary_skeleton/', str(index)+'.png'), 255*(skeleton_r.astype('uint8')),check_contrast=False)
             if not os.path.isdir(os.path.join(save_path, 'vein_binary_skeleton/')): os.makedirs(os.path.join(save_path, 'vein_binary_skeleton/')) 
-            io.imsave(os.path.join(save_path, 'vein_binary_skeleton/', i), 255*(skeleton_b.astype('uint8')),check_contrast=False)
+            if isinstance(i, str):
+                io.imsave(os.path.join(save_path, 'vein_binary_skeleton/', i), 255*(skeleton_b.astype('uint8')),check_contrast=False)
+            else:
+                io.imsave(os.path.join(save_path, 'vein_binary_skeleton/', str(index)+'.png'), 255*(skeleton_b.astype('uint8')),check_contrast=False)
         else:
             img_skeleton_r_list.append(255*skeleton_r.astype('uint8'))
             img_skeleton_b_list.append(255*skeleton_b.astype('uint8'))
@@ -256,9 +266,9 @@ if __name__ == '__main__':
     if not os.path.isdir(csv_save):
         os.makedirs(csv_save)
 
-    test_dir= f'{AUTOMORPH_DATA}/Results/M1/Good_quality/'
-    test_label = "./data/{}/test/1st_manual/".format(dataset_name)
-    test_mask =  "./data/{}/test/mask/".format(dataset_name)
+    test_dir= f'data/output/Results/M1/Good_quality/'
+    test_label = "./data/output/{}/test/1st_manual/".format(dataset_name)
+    test_mask =  "./data/output/{}/test/mask/".format(dataset_name)
 
     mode = 'whole'
 
@@ -396,7 +406,7 @@ if __name__ == '__main__':
             test_net(net_G_1, net_G_A_1, net_G_V_1, net_G_2, net_G_A_2, net_G_V_2, net_G_3, net_G_A_3, net_G_V_3, net_G_4, net_G_A_4, net_G_V_4, net_G_5, net_G_A_5, net_G_V_5, net_G_6, net_G_A_6, net_G_V_6, net_G_7, net_G_A_7, net_G_V_7, net_G_8, net_G_A_8, net_G_V_8, loader=test_loader, device=device, mode=mode,dataset=dataset_name)
 
 
-        FD_list_r,name_list,VD_list_r,FD_list_v,VD_list_b,width_cal_r,width_cal_b = filter_frag(data_path=f'{AUTOMORPH_DATA}/Results/M2/artery_vein/')
+        FD_list_r,name_list,VD_list_r,FD_list_v,VD_list_b,width_cal_r,width_cal_b = filter_frag(data_path=f'data/output/Results/M2/artery_vein/')
         
         
         #Data4stage2 = pd.DataFrame({'Image_id':name_list, 'FD_boxC_artery':FD_list_r, 'Vessel_Density_artery':VD_list_r})

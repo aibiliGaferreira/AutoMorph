@@ -17,8 +17,6 @@ from skimage import io
 from .FD_cal import fractal_dimension,vessel_density
 import shutil
 
-AUTOMORPH_DATA = os.getenv('AUTOMORPH_DATA','..') # TODO: remove automorph_Data
-
 def filter_frag(images, save_path=None):
     if isinstance(save_path, str):
         data_path = save_path
